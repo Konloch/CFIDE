@@ -22,6 +22,7 @@ public class AdvancedInstructionPrinter extends InstructionPrinter {
 	
 	public AdvancedInstructionPrinter(MethodNode m, InstructionPattern p) {
 		super(m, p);
+		
 	}
 	
 	@Override
@@ -57,6 +58,11 @@ public class AdvancedInstructionPrinter extends InstructionPrinter {
 		}
 		line += "                default" + " -> L" + resolveLabel(lin.dflt) + "";
 		return line;
+	}
+	
+	@Override
+	public int resolveLabel(LabelNode ln) {
+		return super.resolveLabel(ln);
 	}
 	
 	@Override

@@ -41,6 +41,8 @@ public class FieldNodeDecompilationVisitor implements DecompilationVisitor<Field
 			tokens.add("private");
 		if ((access & Opcodes.ACC_PROTECTED) != 0)
 			tokens.add("protected");
+		if ((access & Opcodes.ACC_SYNTHETIC) != 0)
+			tokens.add("synthetic");
 		if ((access & Opcodes.ACC_STATIC) != 0)
 			tokens.add("static");
 		if ((access & Opcodes.ACC_FINAL) != 0)

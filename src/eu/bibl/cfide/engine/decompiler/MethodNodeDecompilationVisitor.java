@@ -5,6 +5,7 @@ import java.util.List;
 
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.MethodNode;
+import org.objectweb.asm.tree.TryCatchBlockNode;
 
 public class MethodNodeDecompilationVisitor implements DecompilationVisitor<MethodNode> {
 	
@@ -18,13 +19,37 @@ public class MethodNodeDecompilationVisitor implements DecompilationVisitor<Meth
 		sb.append(m.name);
 		sb.append(" ");
 		sb.append(m.desc);
+		
+		int amountOfThrows = m.exceptions.size();
+		if (amountOfThrows > 0) {
+			sb.append(" throws ");
+			sb.append(m.exceptions.get(0));// exceptions is list<string>
+			for (int i = 1; i < amountOfThrows; i++) {
+				sb.append(", ");
+				sb.append(m.exceptions.get(i));
+			}
+		}
 		if (s.contains("abstract")) {
 			sb.append(" {}\n");
 		} else {
 			sb.append(" {\n");
-			for (String insn : new AdvancedInstructionPrinter(m).createPrint()) {
+			AdvancedInstructionPrinter insnPrinter = new AdvancedInstructionPrinter(m);
+			for (String insn : insnPrinter.createPrint()) {
 				sb.append("         ");
 				sb.append(insn);
+				sb.append("\n");
+			}
+			for (Object o : m.tryCatchBlocks) {
+				TryCatchBlockNode tcbn = (TryCatchBlockNode) o;
+				sb.append("         ");
+				sb.append("TryCatch: L");
+				sb.append(insnPrinter.resolveLabel(tcbn.start));
+				sb.append(" -> L");
+				sb.append(insnPrinter.resolveLabel(tcbn.end));
+				sb.append(" -> L");
+				sb.append(insnPrinter.resolveLabel(tcbn.handler));
+				sb.append(" -> ");
+				sb.append(tcbn.type);
 				sb.append("\n");
 			}
 			sb.append("     }\n");
@@ -54,6 +79,10 @@ public class MethodNodeDecompilationVisitor implements DecompilationVisitor<Meth
 			tokens.add("native");
 		if ((access & Opcodes.ACC_STRICT) != 0)
 			tokens.add("strictfp");
+		if ((access & Opcodes.ACC_BRIDGE) != 0)
+			tokens.add("bridge");
+		if ((access & Opcodes.ACC_VARARGS) != 0)
+			tokens.add("varargs");
 		if (tokens.size() == 0)
 			return "";
 		// hackery delimeters

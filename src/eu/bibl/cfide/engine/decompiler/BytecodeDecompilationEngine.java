@@ -87,13 +87,19 @@ public class BytecodeDecompilationEngine {
 			tokens.add("protected");
 		if ((access & Opcodes.ACC_FINAL) != 0)
 			tokens.add("final");
+		if ((access & Opcodes.ACC_SYNTHETIC) != 0)
+			tokens.add("synthetic");
+		// if ((access & Opcodes.ACC_SUPER) != 0)
+		// tokens.add("super"); implied by invokespecial insn
 		if ((access & Opcodes.ACC_ABSTRACT) != 0)
 			tokens.add("abstract");
 		if ((access & Opcodes.ACC_INTERFACE) != 0)
 			tokens.add("interface");
 		if ((access & Opcodes.ACC_ENUM) != 0)
 			tokens.add("enum");
-		if (!tokens.contains("interface") && !tokens.contains("enum"))
+		if ((access & Opcodes.ACC_ANNOTATION) != 0)
+			tokens.add("annotation");
+		if (!tokens.contains("interface") && !tokens.contains("enum") && !tokens.contains("annotation"))
 			tokens.add("class");
 		if (tokens.size() == 0)
 			return "[Error parsing]";
