@@ -1,4 +1,4 @@
 CFIDE
 =====
 
-Java Classfile IDE
+Java Class File IDE
