@@ -9,7 +9,7 @@
 
 1. Pull from GitHub to Eclipse or something (EGit).
 2. Make sure library jars are added, 1.7+ compiler compliance set and src/resource folders are setup correctly.
-![Compiler compiliance](http://λ.pw/dfi)
+![Compiler compiliance](http://i.imgur.com/cMK97JF.png)
 
 ### Contribution guidelines ###
 
