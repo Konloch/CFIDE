@@ -5,6 +5,10 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
+import java.io.DataOutputStream;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -15,6 +19,7 @@ import java.util.Map;
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
 import javax.swing.JMenuItem;
+import javax.swing.JOptionPane;
 import javax.swing.JPopupMenu;
 import javax.swing.JTree;
 import javax.swing.event.TreeSelectionEvent;
@@ -23,10 +28,13 @@ import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeCellRenderer;
 import javax.swing.tree.TreePath;
 
+import org.objectweb.asm.ClassWriter;
+
 import eu.bibl.banalysis.asm.ClassNode;
 import eu.bibl.banalysis.storage.classes.ClassContainer;
 import eu.bibl.cfide.engine.decompiler.BytecodeDecompilationEngine;
 import eu.bibl.cfide.engine.parser.BasicParser;
+import eu.bibl.cfide.engine.parser.ParserException;
 import eu.bibl.cfide.ui.ProjectPanel;
 
 public class ClassViewerTree extends JTree implements TreeSelectionListener, MouseListener {
@@ -80,7 +88,21 @@ public class ClassViewerTree extends JTree implements TreeSelectionListener, Mou
 			public void actionPerformed(ActionEvent e) {
 				if (selectedNode instanceof ClassTreeNode) {
 					ClassTreeNode ctn = (ClassTreeNode) selectedNode;
-					ClassNode cn = outParser.parse(projectPanel.getText(ctn.getClassName()));
+					try {
+						ClassNode cn = outParser.parse(projectPanel.getText(ctn.getClassName()));
+						ClassWriter cw = new ClassWriter(0);
+						cn.accept(cw);
+						try {
+							DataOutputStream dos = new DataOutputStream(new FileOutputStream(new File("C:/Users/Bibl/Desktop/test.class")));
+							dos.write(cw.toByteArray());
+							dos.close();
+						} catch (IOException e1) {
+							e1.printStackTrace();
+						}
+					} catch (ParserException e1) {
+						JOptionPane.showMessageDialog(ClassViewerTree.this, e1.getMessage(), "Parser error", JOptionPane.ERROR_MESSAGE);
+						e1.printStackTrace();
+					}
 				}
 			}
 		});

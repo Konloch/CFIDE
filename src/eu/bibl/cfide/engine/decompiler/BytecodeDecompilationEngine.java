@@ -1,7 +1,9 @@
 package eu.bibl.cfide.engine.decompiler;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import javax.swing.SwingUtilities;
 
@@ -15,6 +17,19 @@ import eu.bibl.cfide.ui.editor.EditorTextTab;
 import eu.bibl.cfide.ui.tree.ClassTreeNode;
 
 public class BytecodeDecompilationEngine {
+	
+	public static final Map<Integer, String> VERSION_TABLE = new HashMap<Integer, String>();
+	
+	static {
+		VERSION_TABLE.put(Opcodes.V1_1, "V1_1");
+		VERSION_TABLE.put(Opcodes.V1_2, "V1_2");
+		VERSION_TABLE.put(Opcodes.V1_3, "V1_3");
+		VERSION_TABLE.put(Opcodes.V1_4, "V1_4");
+		VERSION_TABLE.put(Opcodes.V1_5, "V1_5");
+		VERSION_TABLE.put(Opcodes.V1_6, "V1_6");
+		VERSION_TABLE.put(Opcodes.V1_7, "V1_7");
+		VERSION_TABLE.put(Opcodes.V1_8, "V1_8");
+	}
 	
 	protected final EditorTabbedPane editor;
 	private FieldNodeDecompilationVisitor fndv;
@@ -43,9 +58,18 @@ public class BytecodeDecompilationEngine {
 		editor.setSelectedComponent(textTab);
 		
 		StringBuilder sb = new StringBuilder();
+		sb.append("using asm:ASM4\n");
+		sb.append("using ver:");
+		sb.append(VERSION_TABLE.get(cn.version));
+		sb.append("\n");
+		
+		sb.append("\n");
+		
 		sb.append(getAccessString(cn.access));
 		sb.append(" ");
 		sb.append(cn.name);
+		sb.append(" extends ");
+		sb.append(cn.superName);
 		
 		int amountOfInterfaces = cn.interfaces.size();
 		if (amountOfInterfaces > 0) {
