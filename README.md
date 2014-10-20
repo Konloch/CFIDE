@@ -8,7 +8,8 @@
 ### How do I get set up? ###
 
 1. Pull from GitHub to Eclipse or something (EGit).
-2. Make sure library jars are added, 1.8 jdk set and src/resource folders are setup correctly.
+2. Make sure library jars are added, 1.7+ compiler compliance set and src/resource folders are setup correctly.
+![Compiler compiliance](http://λ.pw/dfi)
 
 ### Contribution guidelines ###
 
