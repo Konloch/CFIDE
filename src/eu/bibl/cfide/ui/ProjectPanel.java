@@ -15,13 +15,16 @@ import javax.swing.JSplitPane;
 import javax.swing.JTabbedPane;
 import javax.swing.JTree;
 
+import eu.bibl.banalysis.asm.ClassNode;
 import eu.bibl.bio.JarInfo;
 import eu.bibl.bio.jfile.in.JarDownloader;
 import eu.bibl.cfide.engine.decompiler.BytecodeDecompilationEngine;
 import eu.bibl.cfide.engine.decompiler.FieldNodeDecompilationVisitor;
 import eu.bibl.cfide.engine.decompiler.MethodNodeDecompilationVisitor;
+import eu.bibl.cfide.engine.parser.BasicParser;
 import eu.bibl.cfide.project.WorkspaceProject;
 import eu.bibl.cfide.ui.editor.EditorTabbedPane;
+import eu.bibl.cfide.ui.editor.EditorTextTab;
 import eu.bibl.cfide.ui.tree.ClassViewerTree;
 
 public class ProjectPanel extends JPanel implements MouseListener, ActionListener {
@@ -35,12 +38,14 @@ public class ProjectPanel extends JPanel implements MouseListener, ActionListene
 	protected JScrollPane scrollPane;
 	protected JTree tree;
 	protected EditorTabbedPane etp;
+	protected BasicParser<ClassNode> outParser;
 	
-	public ProjectPanel(JTabbedPane tabbedPane, String tabName, WorkspaceProject project) {
+	public ProjectPanel(JTabbedPane tabbedPane, String tabName, WorkspaceProject project, BasicParser<ClassNode> outParser) {
 		super(new BorderLayout());
 		this.tabbedPane = tabbedPane;
 		this.tabName = tabName;
 		this.project = project;
+		this.outParser = outParser;
 		init();
 	}
 	
@@ -51,13 +56,18 @@ public class ProjectPanel extends JPanel implements MouseListener, ActionListene
 		dl.parse();
 		
 		etp = new EditorTabbedPane();
-		tree = new ClassViewerTree(jarFile.getName(), dl.getContents(), new BytecodeDecompilationEngine(etp, new FieldNodeDecompilationVisitor(), new MethodNodeDecompilationVisitor()));
+		tree = new ClassViewerTree(jarFile.getName(), dl.getContents(), this, new BytecodeDecompilationEngine(etp, new FieldNodeDecompilationVisitor(), new MethodNodeDecompilationVisitor()), outParser);
 		splitPane.setResizeWeight(0.115D);
 		scrollPane = new JScrollPane(tree);
 		splitPane.add(scrollPane);
 		splitPane.add(etp);
 		add(splitPane);
 		createTabPanel();
+	}
+	
+	public String getText(String className) {
+		EditorTextTab ett = etp.getTextTab(className);
+		return ett.getTextArea().getText();
 	}
 	
 	protected int index;
@@ -83,7 +93,7 @@ public class ProjectPanel extends JPanel implements MouseListener, ActionListene
 		tabNamePanel.add(tabCloseButton);
 	}
 	
-	public void setupFinal() {
+	public void setupFinal() { // called from IDETabbedPane.openJar and openProj
 		index = tabbedPane.indexOfTab(tabName);
 		tabbedPane.setTabComponentAt(index, tabNamePanel);
 	}

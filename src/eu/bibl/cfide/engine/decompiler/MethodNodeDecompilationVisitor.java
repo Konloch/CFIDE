@@ -19,7 +19,6 @@ public class MethodNodeDecompilationVisitor implements DecompilationVisitor<Meth
 		sb.append(m.name);
 		sb.append(" ");
 		sb.append(m.desc);
-		
 		int amountOfThrows = m.exceptions.size();
 		if (amountOfThrows > 0) {
 			sb.append(" throws ");

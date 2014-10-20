@@ -1,6 +1,10 @@
 package eu.bibl.cfide.ui.tree;
 
 import java.awt.Component;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -10,6 +14,8 @@ import java.util.Map;
 
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
+import javax.swing.JMenuItem;
+import javax.swing.JPopupMenu;
 import javax.swing.JTree;
 import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
@@ -20,25 +26,66 @@ import javax.swing.tree.TreePath;
 import eu.bibl.banalysis.asm.ClassNode;
 import eu.bibl.banalysis.storage.classes.ClassContainer;
 import eu.bibl.cfide.engine.decompiler.BytecodeDecompilationEngine;
+import eu.bibl.cfide.engine.parser.BasicParser;
+import eu.bibl.cfide.ui.ProjectPanel;
 
-public class ClassViewerTree extends JTree implements TreeSelectionListener {
+public class ClassViewerTree extends JTree implements TreeSelectionListener, MouseListener {
 	
 	private static final long serialVersionUID = -1731401270496103799L;
 	private static final Icon JAR_ICON = new ImageIcon("res/jar.png");
 	
 	protected PackageTreeNode root;
 	protected ClassContainer contents;
+	protected ProjectPanel projectPanel;
 	protected BytecodeDecompilationEngine engine;
+	protected BasicParser<ClassNode> outParser;
 	
-	public ClassViewerTree(String jarName, ClassContainer contents, BytecodeDecompilationEngine engine) {
+	public ClassViewerTree(String jarName, ClassContainer contents, ProjectPanel projectPanel, BytecodeDecompilationEngine engine, BasicParser<ClassNode> outParser) {
 		super(new DefaultPackageTreeNode(jarName));
 		this.contents = contents;
+		this.projectPanel = projectPanel;
 		this.engine = engine;
+		this.outParser = outParser;
 		setRootVisible(true);
 		populateTree();
+		setComponentPopupMenu(createPopupMenu());
 		setCellRenderer(new DefaultPackageTreeNodeRenderer());
 		addTreeSelectionListener(this);
+		addMouseListener(this);
 		expandPath(new TreePath(root)); // automatically opens the root node.
+	}
+	
+	protected JPopupMenu createPopupMenu() {
+		JPopupMenu menu = new JPopupMenu() {
+			private static final long serialVersionUID = 7505457795696357320L;
+			
+			@Override
+			public void setVisible(boolean b) {
+				if (b) {
+					if (selectedNode instanceof ClassTreeNode) {
+						super.setVisible(true);// only show if a node is selected
+						TreePath path = new TreePath(selectedNode);
+						ClassViewerTree.this.expandPath(path);// want to highlight the jtree leaf but that wont work,
+						ClassViewerTree.this.setSelectionPath(path);// instead just to fire the open event to make sure the class is decompiled.
+						
+					}
+				} else {
+					super.setVisible(false);
+				}
+			}
+		};
+		JMenuItem item = new JMenuItem("Save Class");
+		item.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				if (selectedNode instanceof ClassTreeNode) {
+					ClassTreeNode ctn = (ClassTreeNode) selectedNode;
+					ClassNode cn = outParser.parse(projectPanel.getText(ctn.getClassName()));
+				}
+			}
+		});
+		menu.add(item);
+		return menu;
 	}
 	
 	protected Map<String, PackageTreeNode> packages;
@@ -50,8 +97,6 @@ public class ClassViewerTree extends JTree implements TreeSelectionListener {
 		Map<PackageTreeNode, PackageTreeNode> packagesToAdd = new HashMap<PackageTreeNode, PackageTreeNode>();
 		
 		for (ClassNode cn : contents.getNodes().values()) {
-			if (cn.name.contains("$"))
-				continue;
 			String[] nameParts = cn.name.split("/");
 			PackageTreeNode lastNode = root;
 			StringBuilder packageDepthName = new StringBuilder();
@@ -112,6 +157,36 @@ public class ClassViewerTree extends JTree implements TreeSelectionListener {
 		}
 	}
 	
+	@Override
+	public void mouseClicked(MouseEvent e) {
+	}
+	
+	protected DefaultMutableTreeNode selectedNode;
+	
+	@Override
+	public void mousePressed(MouseEvent e) {
+		if (e.getButton() == MouseEvent.BUTTON3) {
+			TreePath pathForLocation = getPathForLocation(e.getPoint().x, e.getPoint().y);
+			if (pathForLocation != null) {
+				selectedNode = (DefaultMutableTreeNode) pathForLocation.getLastPathComponent();
+			} else {
+				selectedNode = null;
+			}
+		}
+	}
+	
+	@Override
+	public void mouseReleased(MouseEvent e) {
+	}
+	
+	@Override
+	public void mouseEntered(MouseEvent e) {
+	}
+	
+	@Override
+	public void mouseExited(MouseEvent e) {
+	}
+	
 	class DefaultPackageTreeNodeRenderer extends DefaultTreeCellRenderer {
 		
 		private static final long serialVersionUID = -7238675790138337723L;
@@ -119,7 +194,7 @@ public class ClassViewerTree extends JTree implements TreeSelectionListener {
 		@Override
 		public Component getTreeCellRendererComponent(JTree tree, Object value, boolean selected, boolean expanded, boolean leaf, int row, boolean hasFocus) {
 			super.getTreeCellRendererComponent(tree, value, selected, expanded, leaf, row, hasFocus);
-			if (value.equals(root))
+			if (value.equals(root)) // make sure the root node has the jar icon
 				setIcon(JAR_ICON);
 			return this;
 		}

@@ -101,7 +101,7 @@ public class EditorTextTab extends RTextScrollPane implements MouseListener, Act
 		tabNamePanel.add(tabCloseButton);
 	}
 	
-	public void setupFinal() {
+	public void setupFinal() {// called from EditorTabbedPane.createTextTab
 		index = tabbedPane.indexOfTab(title);
 		tabbedPane.setTabComponentAt(index, tabNamePanel);
 	}

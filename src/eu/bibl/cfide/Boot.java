@@ -1,5 +1,6 @@
 package eu.bibl.cfide;
 
+import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
 
 import eu.bibl.cfide.ui.IDEFrame;
@@ -16,7 +17,12 @@ public class Boot {
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
-		IDEFrame frame = new IDEFrame();
-		frame.setVisible(true);
+		SwingUtilities.invokeLater(new Runnable() {
+			@Override
+			public void run() {
+				IDEFrame frame = new IDEFrame();
+				frame.setVisible(true);
+			}
+		});
 	}
 }

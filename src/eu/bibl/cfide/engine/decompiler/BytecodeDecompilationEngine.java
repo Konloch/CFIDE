@@ -115,7 +115,7 @@ public class BytecodeDecompilationEngine {
 	
 	protected class ResetViewRunnable implements Runnable {
 		
-		public String name;
+		public String name;// needs to be set just before the runnable is used, bit dirty but yolo
 		
 		@Override
 		public void run() {
