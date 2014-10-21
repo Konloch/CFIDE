@@ -38,12 +38,9 @@ public class TextToBytecodeParser implements BasicParser<ClassNode> {
 		REVERSE_VERSION_TABLE.put("V1_8", Opcodes.V1_8);
 	}
 	
-	protected ParserState state;
-	
-	@SuppressWarnings("unchecked")
 	@Override
 	public ClassNode parse(String text) throws ParserException {
-		state = ParserState.USING_SEARCH;
+		ParserState state = ParserState.NONE;
 		List<String> tokens = parseTokens(text);
 		
 		int version = 0;
@@ -58,9 +55,13 @@ public class TextToBytecodeParser implements BasicParser<ClassNode> {
 		for (int i = 0; i < tokens.size(); i++) {
 			String token = tokens.get(i);
 			switch (state) {
-				case MEMBER_SEARCH:
-					
+				case NONE:
+					if (token.equals("using")) {
+						state = ParserState.USING_SEARCH;
+						i--;// 'unread' the last token
+					}
 					break;
+				
 				case USING_SEARCH:
 					if (token.equals("using")) {
 						String usingWhat = tokens.get(++i);
@@ -68,78 +69,53 @@ public class TextToBytecodeParser implements BasicParser<ClassNode> {
 						if (splits.length == 2) {
 							String propertyKey = splits[0];
 							String lookupValue = splits[1];
-							switch (propertyKey) {
-							// asm version setting
-								case "asm":
-									switch (lookupValue) {
-										case "ASM4":
-											asm = Opcodes.ASM4;
-											break;
-										case "ASM5":
-											asm = Opcodes.ASM5;
-											break;
-										default:
-											throw new ParserException("Invalid 'using asm:' value: " + lookupValue);
-									}
+							switch (propertyKey.toUpperCase()) {
+								case "ASM":
+									version = getUsingASMVesion(lookupValue);
 									break;
-								// classfile version setting
-								case "ver":
-									if (REVERSE_VERSION_TABLE.containsKey(lookupValue)) {
-										version = REVERSE_VERSION_TABLE.get(splits[1]);
-									} else {
-										throw new ParserException("Invalid classfile version: " + version);
-									}
+								case "VER":
+									version = getUsingClassfileVersion(lookupValue);
 									break;
-								// default setting
 								default:
 									throw new ParserException("Unknown 'using' property:" + usingWhat);
-							}// propertykey switch close
-							// i++; // skip the propertykey and lookupvalue (key:val) token because we parsed it here., replaced with ++i
-						} else {// splitlength check
+							}
+						} else {
 							throw new ParserException("Invalid 'using' property: " + usingWhat);
 						}
 					} else {
-						state = ParserState.CLASS_HEADER_READING;
+						state = ParserState.NONE;
 					}
-				case CLASS_HEADER_READING:
-					if (token.equals("{")) {// switch to setup class
-						state = ParserState.SETUP_CLASS;
-					} else {
-						if (ACCESS_VALUES.containsKey(token.toUpperCase()))
-							access += ACCESS_VALUES.get(token.toUpperCase());
-						
-						if (isClassNameDeclaration(token, access)) {
-							name = tokens.get(++i);
-						} else if (token.equals("extends")) {
-							superName = tokens.get(++i);
-						} else if (token.equals("implements")) {
-							state = ParserState.CLASS_INTERFACE_READING;
-						}
-					}
-					break;
-				case CLASS_INTERFACE_READING:
-					if (token.equals("{")) {// switch to setup class
-						state = ParserState.SETUP_CLASS;
-						break;
-					}
-					if (!token.equals(",")) {
-						interfaces.add(token.replace(",", ""));
-					}
-					break;
-				case SETUP_CLASS:
-					state = ParserState.MEMBER_SEARCH;
-					cn = new ClassNode(asm);
-					cn.version = version;
-					cn.access = access;
-					cn.name = name;
-					cn.superName = superName;
-					cn.interfaces.addAll(interfaces);// gay warning, no generics in compiled asm jar, but it is <String>
-					access = 0;
+				default:
 					break;
 			}
 		}
 		
 		return cn;
+	}
+	
+	protected int getUsingClassfileVersion(String lookupValue) throws ParserException {
+		if (REVERSE_VERSION_TABLE.containsKey(lookupValue)) {
+			return REVERSE_VERSION_TABLE.get(lookupValue);
+		} else {
+			throw new ParserException("Invalid classfile version: " + lookupValue);
+		}
+	}
+	
+	protected int getUsingASMVesion(String lookupValue) throws ParserException {
+		lookupValue = lookupValue.toUpperCase();
+		if (lookupValue.equals("ASM4")) {
+			return Opcodes.ASM4;
+		} else if (lookupValue.equals("ASM5")) {
+			return Opcodes.ASM5;
+		} else {
+			try {// if the user put in the actual value for the ASM4/ASM5 constant, allow it anyway ;)
+				int val = Integer.parseInt(lookupValue);
+				if ((val == Opcodes.ASM4) || (val == Opcodes.ASM5))
+					return val;
+			} catch (NumberFormatException e) {
+			}
+		}
+		throw new ParserException("Invalid 'using asm:' value: " + lookupValue);
 	}
 	
 	protected boolean isClassNameDeclaration(String token, int access) {
@@ -210,10 +186,7 @@ public class TextToBytecodeParser implements BasicParser<ClassNode> {
 	
 	public enum ParserState {
 		
+		NONE(),
 		USING_SEARCH(),
-		CLASS_HEADER_READING(),
-		CLASS_INTERFACE_READING(),
-		SETUP_CLASS(),
-		MEMBER_SEARCH()
 	}
 }
