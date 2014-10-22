@@ -9,7 +9,7 @@ import org.objectweb.asm.tree.FieldNode;
 public class FieldNodeDecompilationVisitor implements DecompilationVisitor<FieldNode> {
 	
 	@Override
-	public StringBuilder decompile(StringBuilder sb, FieldNode f) {
+	public PrefixedStringBuilder decompile(PrefixedStringBuilder sb, FieldNode f) {
 		String s = getAccessString(f.access);
 		sb.append(s);
 		if (s.length() > 0)

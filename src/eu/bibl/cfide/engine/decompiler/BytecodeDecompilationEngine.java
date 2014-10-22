@@ -9,9 +9,11 @@ import javax.swing.SwingUtilities;
 
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.FieldNode;
+import org.objectweb.asm.tree.InnerClassNode;
 import org.objectweb.asm.tree.MethodNode;
 
 import eu.bibl.banalysis.asm.ClassNode;
+import eu.bibl.banalysis.storage.classes.ClassContainer;
 import eu.bibl.cfide.ui.editor.EditorTabbedPane;
 import eu.bibl.cfide.ui.editor.EditorTextTab;
 import eu.bibl.cfide.ui.tree.ClassTreeNode;
@@ -32,11 +34,13 @@ public class BytecodeDecompilationEngine {
 	}
 	
 	protected final EditorTabbedPane editor;
+	protected ClassContainer container;
 	private FieldNodeDecompilationVisitor fndv;
 	private MethodNodeDecompilationVisitor mndv;
 	
-	public BytecodeDecompilationEngine(EditorTabbedPane editor, FieldNodeDecompilationVisitor fndv, MethodNodeDecompilationVisitor mndv) {
+	public BytecodeDecompilationEngine(EditorTabbedPane editor, ClassContainer container, FieldNodeDecompilationVisitor fndv, MethodNodeDecompilationVisitor mndv) {
 		this.editor = editor;
+		this.container = container;
 		this.fndv = fndv;
 		this.mndv = mndv;
 	}
@@ -57,7 +61,15 @@ public class BytecodeDecompilationEngine {
 		textTab = editor.createTextTab(simpleName);
 		editor.setSelectedComponent(textTab);
 		
-		StringBuilder sb = new StringBuilder();
+		PrefixedStringBuilder sb = new PrefixedStringBuilder();
+		sb = buildClassNodeRepresentation(sb, cn.name, cn);
+		
+		textTab.getTextArea().setText(sb.toString());
+		RESET_VIEW_RUNNABLE.name = simpleName;
+		SwingUtilities.invokeLater(RESET_VIEW_RUNNABLE);// needed to scroll to the top properly
+	}
+	
+	protected PrefixedStringBuilder buildClassNodeRepresentation(PrefixedStringBuilder sb, String parent, ClassNode cn) {
 		sb.append("using asm:ASM4\n");
 		sb.append("using ver:");
 		sb.append(VERSION_TABLE.get(cn.version));
@@ -95,10 +107,31 @@ public class BytecodeDecompilationEngine {
 			sb.append("\n");
 			mndv.decompile(sb, mn);
 		}
+		
+		int done = 0;
+		for (Object o : cn.innerClasses) {
+			InnerClassNode innerClassNode = (InnerClassNode) o;
+			String innerClassName = innerClassNode.name;
+			if ((innerClassName != null) && !innerClassName.equals(parent)) {
+				ClassNode cn1 = container.getNodes().get(innerClassName);
+				if (cn1 != null) {
+					sb.appendPrefix("     ");
+					sb.append("\n\n");
+					sb = buildClassNodeRepresentation(sb, cn1.name, cn1);
+					sb.trimPrefix(5);
+					done++;
+				} else {
+					sb.append("NULL INNER CLASS: ");
+					sb.append(innerClassName);
+					sb.append("\n\n");
+				}
+			}
+		}
+		if (done > 0)// not logical but due to bad code, have to add an extra new line, just for aesthetics
+			sb.append("\n");
 		sb.append("}");
-		textTab.getTextArea().setText(sb.toString());
-		RESET_VIEW_RUNNABLE.name = simpleName;
-		SwingUtilities.invokeLater(RESET_VIEW_RUNNABLE);// needed to scroll to the top properly
+		System.out.println("Wrote end for " + cn.name + " with prefix length: " + sb.prefix.length());
+		return sb;
 	}
 	
 	public static String getAccessString(int access) {

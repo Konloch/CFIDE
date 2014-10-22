@@ -56,7 +56,7 @@ public class ProjectPanel extends JPanel implements MouseListener, ActionListene
 		dl.parse();
 		
 		etp = new EditorTabbedPane();
-		tree = new ClassViewerTree(jarFile.getName(), dl.getContents(), this, new BytecodeDecompilationEngine(etp, new FieldNodeDecompilationVisitor(), new MethodNodeDecompilationVisitor()), outParser);
+		tree = new ClassViewerTree(jarFile.getName(), dl.getContents(), this, new BytecodeDecompilationEngine(etp, dl.getContents(), new FieldNodeDecompilationVisitor(), new MethodNodeDecompilationVisitor()), outParser);
 		splitPane.setResizeWeight(0.115D);
 		scrollPane = new JScrollPane(tree);
 		splitPane.add(scrollPane);

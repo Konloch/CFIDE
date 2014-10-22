@@ -10,7 +10,7 @@ import org.objectweb.asm.tree.TryCatchBlockNode;
 public class MethodNodeDecompilationVisitor implements DecompilationVisitor<MethodNode> {
 	
 	@Override
-	public StringBuilder decompile(StringBuilder sb, MethodNode m) {
+	public PrefixedStringBuilder decompile(PrefixedStringBuilder sb, MethodNode m) {
 		String s = getAccessString(m.access);
 		sb.append("     ");
 		sb.append(s);
