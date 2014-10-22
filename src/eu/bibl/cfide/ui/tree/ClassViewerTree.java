@@ -35,6 +35,7 @@ import eu.bibl.banalysis.storage.classes.ClassContainer;
 import eu.bibl.cfide.engine.decompiler.BytecodeDecompilationEngine;
 import eu.bibl.cfide.engine.parser.BasicParser;
 import eu.bibl.cfide.engine.parser.ParserException;
+import eu.bibl.cfide.project.CFIDEProject;
 import eu.bibl.cfide.ui.ProjectPanel;
 
 public class ClassViewerTree extends JTree implements TreeSelectionListener, MouseListener {
@@ -42,14 +43,16 @@ public class ClassViewerTree extends JTree implements TreeSelectionListener, Mou
 	private static final long serialVersionUID = -1731401270496103799L;
 	private static final Icon JAR_ICON = new ImageIcon("res/jar.png");
 	
+	protected CFIDEProject project;
 	protected PackageTreeNode root;
 	protected ClassContainer contents;
 	protected ProjectPanel projectPanel;
 	protected BytecodeDecompilationEngine engine;
 	protected BasicParser<ClassNode> outParser;
 	
-	public ClassViewerTree(String jarName, ClassContainer contents, ProjectPanel projectPanel, BytecodeDecompilationEngine engine, BasicParser<ClassNode> outParser) {
+	public ClassViewerTree(CFIDEProject project, String jarName, ClassContainer contents, ProjectPanel projectPanel, BytecodeDecompilationEngine engine, BasicParser<ClassNode> outParser) {
 		super(new DefaultPackageTreeNode(jarName));
+		this.project = project;
 		this.contents = contents;
 		this.projectPanel = projectPanel;
 		this.engine = engine;
@@ -118,8 +121,14 @@ public class ClassViewerTree extends JTree implements TreeSelectionListener, Mou
 		Map<ClassTreeNode, PackageTreeNode> classesToAdd = new HashMap<ClassTreeNode, PackageTreeNode>();
 		Map<PackageTreeNode, PackageTreeNode> packagesToAdd = new HashMap<PackageTreeNode, PackageTreeNode>();
 		
+		boolean listInnerClasses = false;
+		try {
+			listInnerClasses = project.getProperty(CFIDEProject.TREE_LIST_INNER_CLASSES, false);
+		} catch (Exception e) {
+			/* ignored */
+		}
 		for (ClassNode cn : contents.getNodes().values()) {
-			if (cn.name.contains("$"))
+			if (!listInnerClasses && cn.name.contains("$"))
 				continue;// don't list inner classes, have them decompiled in the class they came from
 			String[] nameParts = cn.name.split("/");
 			PackageTreeNode lastNode = root;

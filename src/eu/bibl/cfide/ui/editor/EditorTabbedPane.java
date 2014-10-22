@@ -6,13 +6,16 @@ import java.util.Map;
 
 import javax.swing.JTabbedPane;
 
+import eu.bibl.cfide.project.CFIDEProject;
+
 public class EditorTabbedPane extends JTabbedPane {
 	
 	private static final long serialVersionUID = 9106124854514247948L;
 	
+	protected CFIDEProject project;
 	protected Map<String, EditorTextTab> tabs;
 	
-	public EditorTabbedPane() {
+	public EditorTabbedPane(CFIDEProject project) {
 		tabs = new HashMap<String, EditorTextTab>();
 		setFocusable(false);
 	}
@@ -24,7 +27,7 @@ public class EditorTabbedPane extends JTabbedPane {
 	public EditorTextTab createTextTab(String className) {
 		EditorTextTab textTab = tabs.get(className);
 		if (textTab == null) {
-			tabs.put(className, textTab = new EditorTextTab(this, className));
+			tabs.put(className, textTab = new EditorTextTab(project, this, className));
 			addTab(className, textTab);
 			textTab.setupFinal();
 		}

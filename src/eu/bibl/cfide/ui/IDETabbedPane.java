@@ -9,8 +9,8 @@ import javax.swing.JTabbedPane;
 import eu.bibl.banalysis.asm.ClassNode;
 import eu.bibl.cfide.engine.parser.BasicParser;
 import eu.bibl.cfide.engine.parser.TextToBytecodeParser;
-import eu.bibl.cfide.project.ProjectUtils;
 import eu.bibl.cfide.project.CFIDEProject;
+import eu.bibl.cfide.project.ProjectUtils;
 
 public class IDETabbedPane extends JTabbedPane {
 	
@@ -48,7 +48,7 @@ public class IDETabbedPane extends JTabbedPane {
 			return;
 		}
 		CFIDEProject proj = ProjectUtils.fromFile(loc);
-		String tabName = loc.getName().substring(0, loc.getName().length() - 4);// remove .jar from the end of the name
+		String tabName = loc.getName().substring(0, loc.getName().length() - 6);// remove .cfide from the end of the name
 		ProjectPanel panel = new ProjectPanel(this, tabName, proj, outParser);
 		addTab(tabName, panel);
 		panel.setupFinal();

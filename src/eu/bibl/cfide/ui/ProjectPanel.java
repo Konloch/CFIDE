@@ -27,8 +27,8 @@ import eu.bibl.cfide.engine.decompiler.BytecodeDecompilationEngine;
 import eu.bibl.cfide.engine.decompiler.FieldNodeDecompilationVisitor;
 import eu.bibl.cfide.engine.decompiler.MethodNodeDecompilationVisitor;
 import eu.bibl.cfide.engine.parser.BasicParser;
-import eu.bibl.cfide.project.ProjectUtils;
 import eu.bibl.cfide.project.CFIDEProject;
+import eu.bibl.cfide.project.ProjectUtils;
 import eu.bibl.cfide.ui.editor.EditorTabbedPane;
 import eu.bibl.cfide.ui.editor.EditorTextTab;
 import eu.bibl.cfide.ui.tree.ClassViewerTree;
@@ -61,8 +61,8 @@ public class ProjectPanel extends JPanel implements MouseListener, ActionListene
 		JarDownloader dl = new JarDownloader(new JarInfo(jarFile));
 		dl.parse();
 		
-		etp = new EditorTabbedPane();
-		tree = new ClassViewerTree(jarFile.getName(), dl.getContents(), this, new BytecodeDecompilationEngine(etp, dl.getContents(), new FieldNodeDecompilationVisitor(), new MethodNodeDecompilationVisitor()), outParser);
+		etp = new EditorTabbedPane(project);
+		tree = new ClassViewerTree(project, jarFile.getName(), dl.getContents(), this, new BytecodeDecompilationEngine(etp, dl.getContents(), new FieldNodeDecompilationVisitor(), new MethodNodeDecompilationVisitor()), outParser);
 		splitPane.setResizeWeight(0.115D);
 		scrollPane = new JScrollPane(tree);
 		splitPane.add(scrollPane);
