@@ -119,6 +119,8 @@ public class ClassViewerTree extends JTree implements TreeSelectionListener, Mou
 		Map<PackageTreeNode, PackageTreeNode> packagesToAdd = new HashMap<PackageTreeNode, PackageTreeNode>();
 		
 		for (ClassNode cn : contents.getNodes().values()) {
+			if (cn.name.contains("$"))
+				continue;// don't list inner classes, have them decompiled in the class they came from
 			String[] nameParts = cn.name.split("/");
 			PackageTreeNode lastNode = root;
 			StringBuilder packageDepthName = new StringBuilder();

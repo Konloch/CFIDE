@@ -3,18 +3,15 @@ package eu.bibl.cfide.project;
 import java.util.HashMap;
 import java.util.Map;
 
-public class WorkspaceProject {
+public class CFIDEProject {
 	
-	protected String jarLocation;
+	public static final String JAR_LOCATION_KEY = "jar.loc";
+	
 	protected Map<String, Object> properties;
 	
-	public WorkspaceProject(String jarLocation) {
-		this.jarLocation = jarLocation;
+	public CFIDEProject(String jarLocation) {
 		properties = new HashMap<String, Object>();
-	}
-	
-	public String getJarLocation() {
-		return jarLocation;
+		properties.put(JAR_LOCATION_KEY, jarLocation);
 	}
 	
 	public <T> T getProperty(String key) {

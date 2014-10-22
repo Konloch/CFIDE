@@ -10,7 +10,7 @@ import eu.bibl.banalysis.asm.ClassNode;
 import eu.bibl.cfide.engine.parser.BasicParser;
 import eu.bibl.cfide.engine.parser.TextToBytecodeParser;
 import eu.bibl.cfide.project.ProjectUtils;
-import eu.bibl.cfide.project.WorkspaceProject;
+import eu.bibl.cfide.project.CFIDEProject;
 
 public class IDETabbedPane extends JTabbedPane {
 	
@@ -33,7 +33,7 @@ public class IDETabbedPane extends JTabbedPane {
 			JOptionPane.showMessageDialog(null, "File doesn't exist.", "Invalid input file.", JOptionPane.ERROR_MESSAGE);
 			return;
 		}
-		WorkspaceProject proj = ProjectUtils.newProject(location);
+		CFIDEProject proj = ProjectUtils.newProject(location);
 		String tabName = loc.getName().substring(0, loc.getName().length() - 4);// remove .jar from the end of the name
 		ProjectPanel panel = new ProjectPanel(this, tabName, proj, outParser);
 		addTab(tabName, panel);
@@ -47,5 +47,11 @@ public class IDETabbedPane extends JTabbedPane {
 			JOptionPane.showMessageDialog(null, "File doesn't exist.", "Invalid input file.", JOptionPane.ERROR_MESSAGE);
 			return;
 		}
+		CFIDEProject proj = ProjectUtils.fromFile(loc);
+		String tabName = loc.getName().substring(0, loc.getName().length() - 4);// remove .jar from the end of the name
+		ProjectPanel panel = new ProjectPanel(this, tabName, proj, outParser);
+		addTab(tabName, panel);
+		panel.setupFinal();
+		setSelectedComponent(panel);
 	}
 }

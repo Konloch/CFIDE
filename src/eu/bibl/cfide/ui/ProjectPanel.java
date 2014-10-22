@@ -8,12 +8,17 @@ import java.awt.event.MouseListener;
 import java.io.File;
 
 import javax.swing.JButton;
+import javax.swing.JFileChooser;
 import javax.swing.JLabel;
+import javax.swing.JMenuItem;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
+import javax.swing.JPopupMenu;
 import javax.swing.JScrollPane;
 import javax.swing.JSplitPane;
 import javax.swing.JTabbedPane;
 import javax.swing.JTree;
+import javax.swing.filechooser.FileNameExtensionFilter;
 
 import eu.bibl.banalysis.asm.ClassNode;
 import eu.bibl.bio.JarInfo;
@@ -22,7 +27,8 @@ import eu.bibl.cfide.engine.decompiler.BytecodeDecompilationEngine;
 import eu.bibl.cfide.engine.decompiler.FieldNodeDecompilationVisitor;
 import eu.bibl.cfide.engine.decompiler.MethodNodeDecompilationVisitor;
 import eu.bibl.cfide.engine.parser.BasicParser;
-import eu.bibl.cfide.project.WorkspaceProject;
+import eu.bibl.cfide.project.ProjectUtils;
+import eu.bibl.cfide.project.CFIDEProject;
 import eu.bibl.cfide.ui.editor.EditorTabbedPane;
 import eu.bibl.cfide.ui.editor.EditorTextTab;
 import eu.bibl.cfide.ui.tree.ClassViewerTree;
@@ -33,14 +39,14 @@ public class ProjectPanel extends JPanel implements MouseListener, ActionListene
 	
 	protected JTabbedPane tabbedPane;
 	protected String tabName;
-	protected WorkspaceProject project;
+	protected CFIDEProject project;
 	protected JSplitPane splitPane;
 	protected JScrollPane scrollPane;
 	protected JTree tree;
 	protected EditorTabbedPane etp;
 	protected BasicParser<ClassNode> outParser;
 	
-	public ProjectPanel(JTabbedPane tabbedPane, String tabName, WorkspaceProject project, BasicParser<ClassNode> outParser) {
+	public ProjectPanel(JTabbedPane tabbedPane, String tabName, CFIDEProject project, BasicParser<ClassNode> outParser) {
 		super(new BorderLayout());
 		this.tabbedPane = tabbedPane;
 		this.tabName = tabName;
@@ -51,7 +57,7 @@ public class ProjectPanel extends JPanel implements MouseListener, ActionListene
 	
 	private void init() {
 		splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT);
-		File jarFile = new File(project.getJarLocation());
+		File jarFile = new File(project.<String> getProperty(CFIDEProject.JAR_LOCATION_KEY));
 		JarDownloader dl = new JarDownloader(new JarInfo(jarFile));
 		dl.parse();
 		
@@ -62,12 +68,42 @@ public class ProjectPanel extends JPanel implements MouseListener, ActionListene
 		splitPane.add(scrollPane);
 		splitPane.add(etp);
 		add(splitPane);
+		createPopupMenu();// needs to be called first
 		createTabPanel();
 	}
 	
 	public String getText(String className) {
 		EditorTextTab ett = etp.getTextTab(className);
 		return ett.getTextArea().getText();
+	}
+	
+	protected JPopupMenu popupMenu;
+	
+	protected void createPopupMenu() {
+		// save menu popup
+		popupMenu = new JPopupMenu();
+		JMenuItem saveMenuItem = new JMenuItem("Save");
+		saveMenuItem.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				JFileChooser chooser = new JFileChooser();
+				FileNameExtensionFilter filter = new FileNameExtensionFilter("CFIDE projects", "cfide");
+				chooser.setFileFilter(filter);
+				int returnValue = chooser.showSaveDialog(ProjectPanel.this);
+				if (returnValue == JFileChooser.APPROVE_OPTION) {
+					File file = chooser.getSelectedFile();
+					if (file.exists()) {
+						int yesNoValue = JOptionPane.showOptionDialog(ProjectPanel.this, "Do you want to overwrite the file?", "File already exists", JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE, null, null, null);
+						if (yesNoValue == JOptionPane.NO_OPTION)// return value for no button press: 1
+							return;
+					}
+					// if code reaches here, user pressed yes button
+					ProjectUtils.save(project, file);
+				}
+			}
+		});
+		
+		popupMenu.add(saveMenuItem);
 	}
 	
 	protected int index;
@@ -89,6 +125,7 @@ public class ProjectPanel extends JPanel implements MouseListener, ActionListene
 		tabCloseButton.setSize(UISettings.CLOSE_BUTTON_SIZE);
 		tabCloseButton.setPreferredSize(UISettings.CLOSE_BUTTON_SIZE);
 		
+		tabNamePanel.setComponentPopupMenu(popupMenu);
 		tabNamePanel.add(tabNameLabel, BorderLayout.WEST);
 		tabNamePanel.add(tabCloseButton);
 	}
@@ -105,6 +142,11 @@ public class ProjectPanel extends JPanel implements MouseListener, ActionListene
 	@Override
 	public void mousePressed(MouseEvent e) {
 		tabbedPane.setSelectedComponent(ProjectPanel.this);
+		if (e.getButton() != MouseEvent.BUTTON1) {
+			if (popupMenu.isShowing())
+				popupMenu.setVisible(false);
+			popupMenu.show(tabNamePanel, e.getX(), e.getY());
+		}
 	}
 	
 	@Override

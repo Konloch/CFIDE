@@ -130,7 +130,7 @@ public class BytecodeDecompilationEngine {
 		if (done > 0)// not logical but due to bad code, have to add an extra new line, just for aesthetics
 			sb.append("\n");
 		sb.append("}");
-		System.out.println("Wrote end for " + cn.name + " with prefix length: " + sb.prefix.length());
+		// System.out.println("Wrote end for " + cn.name + " with prefix length: " + sb.prefix.length());
 		return sb;
 	}
 	
