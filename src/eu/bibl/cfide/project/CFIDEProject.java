@@ -12,14 +12,21 @@ public class CFIDEProject {
 	
 	public static final String JAR_LOCATION_KEY = "jar.loc";
 	public static final String TREE_LIST_INNER_CLASSES = "tree.list.innerclasses";
+	public static final String COMPILER_CLASS = "compiler.class";
+	public static final String COMPILER_PARSER_CLASS = "compiler.parser.class";
+	public static final String COMPILER_BUILDER_CLASS = "compiler.builder.class";
 	
 	protected File file;
 	protected Map<String, Object> properties;
 	
+	private CFIDEProject() {// needed because if GSON creates a new instance, it needs to be added to the cache.
+		projects.add(this);
+	}
+	
 	public CFIDEProject(String jarLocation) {
+		this();
 		properties = new HashMap<String, Object>();
 		properties.put(JAR_LOCATION_KEY, jarLocation);
-		projects.add(this);
 	}
 	
 	public <T> T getProperty(String key) {

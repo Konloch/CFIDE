@@ -23,10 +23,10 @@ import javax.swing.filechooser.FileNameExtensionFilter;
 import eu.bibl.banalysis.asm.ClassNode;
 import eu.bibl.bio.JarInfo;
 import eu.bibl.bio.jfile.in.JarDownloader;
+import eu.bibl.cfide.engine.compiler.BasicSourceCompiler;
 import eu.bibl.cfide.engine.decompiler.BytecodeDecompilationEngine;
 import eu.bibl.cfide.engine.decompiler.FieldNodeDecompilationVisitor;
 import eu.bibl.cfide.engine.decompiler.MethodNodeDecompilationVisitor;
-import eu.bibl.cfide.engine.parser.BasicParser;
 import eu.bibl.cfide.project.CFIDEProject;
 import eu.bibl.cfide.project.ProjectUtils;
 import eu.bibl.cfide.ui.editor.EditorTabbedPane;
@@ -44,14 +44,14 @@ public class ProjectPanel extends JPanel implements MouseListener, ActionListene
 	protected JScrollPane scrollPane;
 	protected JTree tree;
 	protected EditorTabbedPane etp;
-	protected BasicParser<ClassNode> outParser;
+	protected BasicSourceCompiler<ClassNode[]> compiler;
 	
-	public ProjectPanel(JTabbedPane tabbedPane, String tabName, CFIDEProject project, BasicParser<ClassNode> outParser) {
+	public ProjectPanel(JTabbedPane tabbedPane, String tabName, CFIDEProject project, BasicSourceCompiler<ClassNode[]> compiler) {
 		super(new BorderLayout());
 		this.tabbedPane = tabbedPane;
 		this.tabName = tabName;
 		this.project = project;
-		this.outParser = outParser;
+		this.compiler = compiler;
 		init();
 	}
 	
@@ -62,7 +62,7 @@ public class ProjectPanel extends JPanel implements MouseListener, ActionListene
 		dl.parse();
 		
 		etp = new EditorTabbedPane(project);
-		tree = new ClassViewerTree(project, jarFile.getName(), dl.getContents(), this, new BytecodeDecompilationEngine(etp, dl.getContents(), new FieldNodeDecompilationVisitor(), new MethodNodeDecompilationVisitor()), outParser);
+		tree = new ClassViewerTree(project, jarFile.getName(), dl.getContents(), this, new BytecodeDecompilationEngine(etp, dl.getContents(), new FieldNodeDecompilationVisitor(), new MethodNodeDecompilationVisitor()), compiler);
 		splitPane.setResizeWeight(0.115D);
 		scrollPane = new JScrollPane(tree);
 		splitPane.add(scrollPane);

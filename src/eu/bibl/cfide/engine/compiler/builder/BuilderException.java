@@ -1,13 +1,15 @@
-package eu.bibl.cfide.engine.parser;
+package eu.bibl.cfide.engine.compiler.builder;
 
-public class ParserException extends Exception {
+import eu.bibl.cfide.engine.compiler.CompilerException;
+
+public class BuilderException extends CompilerException {
 	
 	private static final long serialVersionUID = -8007148706253744087L;
 	
 	/**
 	 * Constructs a new exception with {@code null} as its detail message. The cause is not initialized, and may subsequently be initialized by a call to {@link #initCause}.
 	 */
-	public ParserException() {
+	public BuilderException() {
 		super();
 	}
 	
@@ -16,7 +18,7 @@ public class ParserException extends Exception {
 	 *
 	 * @param message the detail message. The detail message is saved for later retrieval by the {@link #getMessage()} method.
 	 */
-	public ParserException(String message) {
+	public BuilderException(String message) {
 		super(message);
 	}
 	
@@ -29,7 +31,7 @@ public class ParserException extends Exception {
 	 * @param cause the cause (which is saved for later retrieval by the {@link #getCause()} method). (A <tt>null</tt> value is permitted, and indicates that the cause is nonexistent or unknown.)
 	 * @since 1.4
 	 */
-	public ParserException(String message, Throwable cause) {
+	public BuilderException(String message, Throwable cause) {
 		super(message, cause);
 	}
 	
@@ -39,7 +41,7 @@ public class ParserException extends Exception {
 	 * @param cause the cause (which is saved for later retrieval by the {@link #getCause()} method). (A <tt>null</tt> value is permitted, and indicates that the cause is nonexistent or unknown.)
 	 * @since 1.4
 	 */
-	public ParserException(Throwable cause) {
+	public BuilderException(Throwable cause) {
 		super(cause);
 	}
 	
@@ -52,7 +54,7 @@ public class ParserException extends Exception {
 	 * @param writableStackTrace whether or not the stack trace should be writable
 	 * @since 1.7
 	 */
-	protected ParserException(String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
+	protected BuilderException(String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
 		super(message, cause, enableSuppression, writableStackTrace);
 	}
 }

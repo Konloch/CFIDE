@@ -11,7 +11,7 @@ public class PrefixedStringBuilder {
 	
 	public PrefixedStringBuilder append(String s) {
 		sb.append(s);
-		if (s.contains("\n") && (prefix != null) && (prefix.length() > 0))
+		if (s.contains("\n") && (prefix != null) && (prefix.length() > 0))// insert the prefix at every new line, overridable
 			sb.append(prefix);
 		return this;
 	}

@@ -32,9 +32,9 @@ import org.objectweb.asm.ClassWriter;
 
 import eu.bibl.banalysis.asm.ClassNode;
 import eu.bibl.banalysis.storage.classes.ClassContainer;
+import eu.bibl.cfide.engine.compiler.BasicSourceCompiler;
+import eu.bibl.cfide.engine.compiler.CompilerException;
 import eu.bibl.cfide.engine.decompiler.BytecodeDecompilationEngine;
-import eu.bibl.cfide.engine.parser.BasicParser;
-import eu.bibl.cfide.engine.parser.ParserException;
 import eu.bibl.cfide.project.CFIDEProject;
 import eu.bibl.cfide.ui.ProjectPanel;
 
@@ -48,15 +48,15 @@ public class ClassViewerTree extends JTree implements TreeSelectionListener, Mou
 	protected ClassContainer contents;
 	protected ProjectPanel projectPanel;
 	protected BytecodeDecompilationEngine engine;
-	protected BasicParser<ClassNode> outParser;
+	protected BasicSourceCompiler<ClassNode[]> compiler;
 	
-	public ClassViewerTree(CFIDEProject project, String jarName, ClassContainer contents, ProjectPanel projectPanel, BytecodeDecompilationEngine engine, BasicParser<ClassNode> outParser) {
+	public ClassViewerTree(CFIDEProject project, String jarName, ClassContainer contents, ProjectPanel projectPanel, BytecodeDecompilationEngine engine, BasicSourceCompiler<ClassNode[]> compiler) {
 		super(new DefaultPackageTreeNode(jarName));
 		this.project = project;
 		this.contents = contents;
 		this.projectPanel = projectPanel;
 		this.engine = engine;
-		this.outParser = outParser;
+		this.compiler = compiler;
 		setRootVisible(true);
 		populateTree();
 		setComponentPopupMenu(createPopupMenu());
@@ -92,18 +92,21 @@ public class ClassViewerTree extends JTree implements TreeSelectionListener, Mou
 				if (selectedNode instanceof ClassTreeNode) {
 					ClassTreeNode ctn = (ClassTreeNode) selectedNode;
 					try {
-						ClassNode cn = outParser.parse(projectPanel.getText(ctn.getClassName()));
+						ClassNode[] cns = compiler.compile(projectPanel.getText(ctn.getClassName()));
 						ClassWriter cw = new ClassWriter(0);
-						cn.accept(cw);
-						try {
-							DataOutputStream dos = new DataOutputStream(new FileOutputStream(new File("C:/Users/Bibl/Desktop/test.class")));
-							dos.write(cw.toByteArray());
-							dos.close();
-						} catch (IOException e1) {
-							e1.printStackTrace();
+						for (int i = 0; i < cns.length; i++) {
+							ClassNode cn = cns[i];
+							cn.accept(cw);
+							try {
+								DataOutputStream dos = new DataOutputStream(new FileOutputStream(new File("C:/Users/Bibl/Desktop/test.class")));
+								dos.write(cw.toByteArray());
+								dos.close();
+							} catch (IOException e1) {
+								e1.printStackTrace();
+							}
 						}
-					} catch (ParserException e1) {
-						JOptionPane.showMessageDialog(ClassViewerTree.this, e1.getMessage(), "Parser error", JOptionPane.ERROR_MESSAGE);
+					} catch (CompilerException e1) {
+						JOptionPane.showMessageDialog(ClassViewerTree.this, e1.getMessage(), "Compiler error", JOptionPane.ERROR_MESSAGE);
 						e1.printStackTrace();
 					}
 				}
