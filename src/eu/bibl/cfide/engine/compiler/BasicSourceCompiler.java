@@ -4,8 +4,8 @@ import java.util.List;
 
 import eu.bibl.cfide.engine.compiler.builder.IBuilder;
 import eu.bibl.cfide.engine.compiler.parser.BasicTokenParser;
-import eu.bibl.cfide.engine.compiler.parser.impl.BytecodeSourceParser;
-import eu.bibl.cfide.engine.compiler.parser.tokens.ParserToken;
+import eu.bibl.cfide.engine.compiler.parser.ParserToken;
+import eu.bibl.cfide.engine.compiler.parser.cfideimpl.BytecodeSourceParser;
 import eu.bibl.cfide.project.CFIDEProject;
 
 public abstract class BasicSourceCompiler<T> implements ICompiler<T, String> {

@@ -24,9 +24,8 @@ import eu.bibl.banalysis.asm.ClassNode;
 import eu.bibl.bio.JarInfo;
 import eu.bibl.bio.jfile.in.JarDownloader;
 import eu.bibl.cfide.engine.compiler.BasicSourceCompiler;
-import eu.bibl.cfide.engine.decompiler.BytecodeDecompilationEngine;
-import eu.bibl.cfide.engine.decompiler.FieldNodeDecompilationVisitor;
-import eu.bibl.cfide.engine.decompiler.MethodNodeDecompilationVisitor;
+import eu.bibl.cfide.engine.decompiler.ClassNodeDecompilationUnit;
+import eu.bibl.cfide.engine.decompiler.DecompilationUnit;
 import eu.bibl.cfide.project.CFIDEProject;
 import eu.bibl.cfide.project.ProjectUtils;
 import eu.bibl.cfide.ui.editor.EditorTabbedPane;
@@ -41,6 +40,7 @@ public class ProjectPanel extends JPanel implements MouseListener, ActionListene
 	protected String tabName;
 	protected CFIDEProject project;
 	protected JSplitPane splitPane;
+	protected JarDownloader dl;
 	protected JScrollPane scrollPane;
 	protected JTree tree;
 	protected EditorTabbedPane etp;
@@ -56,13 +56,14 @@ public class ProjectPanel extends JPanel implements MouseListener, ActionListene
 	}
 	
 	private void init() {
-		splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT);
 		File jarFile = new File(project.<String> getProperty(CFIDEProject.JAR_LOCATION_KEY));
-		JarDownloader dl = new JarDownloader(new JarInfo(jarFile));
-		dl.parse();
+		dl = new JarDownloader(new JarInfo(jarFile));
+		if (!dl.parse())
+			return;
 		
+		splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT);
 		etp = new EditorTabbedPane(project);
-		tree = new ClassViewerTree(project, jarFile.getName(), dl.getContents(), this, new BytecodeDecompilationEngine(etp, dl.getContents(), new FieldNodeDecompilationVisitor(), new MethodNodeDecompilationVisitor()), compiler);
+		tree = new ClassViewerTree(project, etp, jarFile.getName(), dl.getContents(), this, getClassNodeDecompilationUnitImpl(), compiler);
 		splitPane.setResizeWeight(0.115D);
 		scrollPane = new JScrollPane(tree);
 		splitPane.add(scrollPane);
@@ -70,6 +71,10 @@ public class ProjectPanel extends JPanel implements MouseListener, ActionListene
 		add(splitPane);
 		createPopupMenu();// needs to be called first
 		createTabPanel();
+	}
+	
+	protected DecompilationUnit<ClassNode> getClassNodeDecompilationUnitImpl() {
+		return new ClassNodeDecompilationUnit(project, dl.getContents());
 	}
 	
 	public String getText(String className) {

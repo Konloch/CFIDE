@@ -34,9 +34,12 @@ import eu.bibl.banalysis.asm.ClassNode;
 import eu.bibl.banalysis.storage.classes.ClassContainer;
 import eu.bibl.cfide.engine.compiler.BasicSourceCompiler;
 import eu.bibl.cfide.engine.compiler.CompilerException;
-import eu.bibl.cfide.engine.decompiler.BytecodeDecompilationEngine;
+import eu.bibl.cfide.engine.decompiler.DecompilationUnit;
+import eu.bibl.cfide.engine.decompiler.PrefixedStringBuilder;
 import eu.bibl.cfide.project.CFIDEProject;
 import eu.bibl.cfide.ui.ProjectPanel;
+import eu.bibl.cfide.ui.editor.EditorTabbedPane;
+import eu.bibl.cfide.ui.editor.EditorTextTab;
 
 public class ClassViewerTree extends JTree implements TreeSelectionListener, MouseListener {
 	
@@ -44,15 +47,17 @@ public class ClassViewerTree extends JTree implements TreeSelectionListener, Mou
 	private static final Icon JAR_ICON = new ImageIcon("res/jar.png");
 	
 	protected CFIDEProject project;
+	protected EditorTabbedPane etp;
 	protected PackageTreeNode root;
 	protected ClassContainer contents;
 	protected ProjectPanel projectPanel;
-	protected BytecodeDecompilationEngine engine;
+	protected DecompilationUnit<ClassNode> engine;
 	protected BasicSourceCompiler<ClassNode[]> compiler;
 	
-	public ClassViewerTree(CFIDEProject project, String jarName, ClassContainer contents, ProjectPanel projectPanel, BytecodeDecompilationEngine engine, BasicSourceCompiler<ClassNode[]> compiler) {
+	public ClassViewerTree(CFIDEProject project, EditorTabbedPane etp, String jarName, ClassContainer contents, ProjectPanel projectPanel, DecompilationUnit<ClassNode> engine, BasicSourceCompiler<ClassNode[]> compiler) {
 		super(new DefaultPackageTreeNode(jarName));
 		this.project = project;
+		this.etp = etp;
 		this.contents = contents;
 		this.projectPanel = projectPanel;
 		this.engine = engine;
@@ -189,8 +194,25 @@ public class ClassViewerTree extends JTree implements TreeSelectionListener, Mou
 			return;
 		
 		if (node instanceof ClassTreeNode) {
-			engine.decompile(((ClassTreeNode) node).getClassNode());
+			decompile(((ClassTreeNode) node).getClassNode());
 		}
+	}
+	
+	protected void decompile(ClassNode cn) {
+		String simpleName = ClassTreeNode.getClassName(cn.name);
+		EditorTextTab textTab = etp.getTextTab(simpleName);
+		if (textTab != null) {
+			if (!textTab.isShowing()) {
+				etp.addTab(simpleName, textTab);
+				textTab.setupFinal();
+			}
+			etp.setSelectedComponent(textTab);
+			return;
+		}
+		textTab = etp.createTextTab(simpleName);
+		etp.setSelectedComponent(textTab);
+		PrefixedStringBuilder sb = engine.decompile(new PrefixedStringBuilder(), cn);
+		textTab.setText(sb.toString());
 	}
 	
 	@Override

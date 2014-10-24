@@ -46,6 +46,7 @@ public final class ProjectUtils {
 			projFile = new File(projFile.getParentFile(), name);
 		}
 		proj.file = projFile;
+		
 		try (BufferedWriter writer = new BufferedWriter(new FileWriter(projFile))) {
 			String gsonString = GSON_INSTANCE.toJson(proj);
 			writer.write(gsonString);

@@ -1,48 +1,15 @@
-package eu.bibl.cfide.engine.compiler.parser.impl;
+package eu.bibl.cfide.engine.compiler.parser.cfideimpl;
 
-import java.lang.reflect.Field;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-
-import org.objectweb.asm.Opcodes;
 
 import eu.bibl.cfide.engine.compiler.parser.BasicTokenParser;
 import eu.bibl.cfide.engine.compiler.parser.ParserException;
-import eu.bibl.cfide.engine.compiler.parser.impl.tokens.StringLiteralToken;
-import eu.bibl.cfide.engine.compiler.parser.tokens.ParserToken;
+import eu.bibl.cfide.engine.compiler.parser.ParserToken;
+import eu.bibl.cfide.engine.compiler.parser.cfideimpl.tokens.member.ClassMemberToken;
+import eu.bibl.cfide.engine.compiler.parser.cfideimpl.tokens.using.UsingToken;
 
 public class BytecodeSourceParser extends BasicTokenParser {
-	
-	public static final Map<String, Integer> ACCESS_VALUES = new HashMap<String, Integer>();
-	public static final Map<String, Integer> REVERSE_VERSION_TABLE = new HashMap<String, Integer>();
-	
-	static {
-		for (Field f : Opcodes.class.getDeclaredFields()) {
-			if (f.getName().startsWith("ACC_")) {
-				f.setAccessible(true);
-				try {
-					int value = f.getInt(null);
-					ACCESS_VALUES.put(f.getName().substring(4), value);
-					System.out.println("Name: " + f.getName().substring(4));
-				} catch (IllegalArgumentException | IllegalAccessException e) {
-					e.printStackTrace();
-				}
-			}
-		}
-		
-		System.out.println(ACCESS_VALUES.keySet().size());
-		
-		REVERSE_VERSION_TABLE.put("V1_1", Opcodes.V1_1);
-		REVERSE_VERSION_TABLE.put("V1_2", Opcodes.V1_2);
-		REVERSE_VERSION_TABLE.put("V1_3", Opcodes.V1_3);
-		REVERSE_VERSION_TABLE.put("V1_4", Opcodes.V1_4);
-		REVERSE_VERSION_TABLE.put("V1_5", Opcodes.V1_5);
-		REVERSE_VERSION_TABLE.put("V1_6", Opcodes.V1_6);
-		REVERSE_VERSION_TABLE.put("V1_7", Opcodes.V1_7);
-		REVERSE_VERSION_TABLE.put("V1_8", Opcodes.V1_8);
-	}
 	
 	@Override
 	public List<ParserToken> parse(String text) throws ParserException {
@@ -51,10 +18,16 @@ public class BytecodeSourceParser extends BasicTokenParser {
 		
 		for (int i = 0; i < lexedTokens.size(); i++) {
 			String sToken = lexedTokens.get(i);// s - string
-			if (sToken.startsWith("\"")) {
-				tokens.add(new StringLiteralToken(sToken));
-			} else if (ACCESS_VALUES.containsKey(sToken)) {
-				
+			/*
+			 * if (sToken.startsWith("\"")) {
+			 * tokens.add(new StringLiteralToken(sToken));
+			 * } else
+			 */
+			if (sToken.toUpperCase().equals("using")) {
+				tokens.add(UsingToken.getByKey(lexedTokens.get(++i), lexedTokens.get(++i)));
+			} else if (sToken.equals("{")) {
+				ClassMemberToken.create(lexedTokens, i);
+				return tokens;
 			}
 		}
 		return tokens;

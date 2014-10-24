@@ -7,7 +7,15 @@ import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.MethodNode;
 import org.objectweb.asm.tree.TryCatchBlockNode;
 
-public class MethodNodeDecompilationVisitor implements DecompilationVisitor<MethodNode> {
+import eu.bibl.cfide.project.CFIDEProject;
+
+public class MethodNodeDecompilationUnit implements DecompilationUnit<MethodNode> {
+	
+	protected CFIDEProject project;
+	
+	public MethodNodeDecompilationUnit(CFIDEProject project) {
+		this.project = project;
+	}
 	
 	@Override
 	public PrefixedStringBuilder decompile(PrefixedStringBuilder sb, MethodNode m) {
@@ -19,6 +27,7 @@ public class MethodNodeDecompilationVisitor implements DecompilationVisitor<Meth
 		sb.append(m.name);
 		sb.append(" ");
 		sb.append(m.desc);
+		
 		int amountOfThrows = m.exceptions.size();
 		if (amountOfThrows > 0) {
 			sb.append(" throws ");
@@ -51,7 +60,11 @@ public class MethodNodeDecompilationVisitor implements DecompilationVisitor<Meth
 				sb.append(tcbn.type);
 				sb.append("\n");
 			}
-			sb.append("     }\n");
+			sb.append("     } //end of ");
+			sb.append(m.name);
+			sb.append(" ");
+			sb.append(m.desc);
+			sb.append("\n");
 		}
 		return sb;
 	}

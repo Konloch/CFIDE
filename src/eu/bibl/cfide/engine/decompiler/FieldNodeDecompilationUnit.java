@@ -6,7 +6,15 @@ import java.util.List;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.FieldNode;
 
-public class FieldNodeDecompilationVisitor implements DecompilationVisitor<FieldNode> {
+import eu.bibl.cfide.project.CFIDEProject;
+
+public class FieldNodeDecompilationUnit implements DecompilationUnit<FieldNode> {
+	
+	protected CFIDEProject project;
+	
+	public FieldNodeDecompilationUnit(CFIDEProject project) {
+		this.project = project;
+	}
 	
 	@Override
 	public PrefixedStringBuilder decompile(PrefixedStringBuilder sb, FieldNode f) {

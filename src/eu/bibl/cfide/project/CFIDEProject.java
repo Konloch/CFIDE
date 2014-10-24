@@ -12,15 +12,20 @@ public class CFIDEProject {
 	
 	public static final String JAR_LOCATION_KEY = "jar.loc";
 	public static final String TREE_LIST_INNER_CLASSES = "tree.list.innerclasses";
+	
 	public static final String COMPILER_CLASS = "compiler.class";
 	public static final String COMPILER_PARSER_CLASS = "compiler.parser.class";
 	public static final String COMPILER_BUILDER_CLASS = "compiler.builder.class";
 	
+	public static final String DECOMPILER_FIELD_DECOMPILATION_UNIT_CLASS = "decompiler.fndu.class";
+	public static final String DECOMPILER_METHOD_DECOMPILATION_UNIT_CLASS = "decompiler.mndu.class";
+	
 	protected File file;
 	protected Map<String, Object> properties;
 	
-	private CFIDEProject() {// needed because if GSON creates a new instance, it needs to be added to the cache.
+	protected CFIDEProject() {// needed because if GSON creates a new instance, it needs to be added to the cache.
 		projects.add(this);
+		System.out.println("Created project");
 	}
 	
 	public CFIDEProject(String jarLocation) {
@@ -39,6 +44,7 @@ public class CFIDEProject {
 			if (properties.containsKey(key)) {
 				return (T) properties.get(key);
 			} else {
+				System.out.println("putting " + key);
 				putProperty(key, defaultValue);
 				return defaultValue;
 			}
@@ -56,14 +62,16 @@ public class CFIDEProject {
 	}
 	
 	static {
-		Runtime.getRuntime().addShutdownHook(new Thread(new Runnable() {
+		Runtime.getRuntime().addShutdownHook(new Thread() {
 			@Override
 			public void run() {
+				System.out.print("Saving " + projects.size() + " project(s).");
 				for (CFIDEProject proj : projects) {
-					if ((proj != null) && (proj.file != null))
+					if ((proj != null) && (proj.file != null)) {
 						ProjectUtils.save(proj, proj.file);
+					}
 				}
 			}
-		}));
+		});
 	}
 }

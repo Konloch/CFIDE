@@ -1,12 +1,13 @@
-package eu.bibl.cfide.engine.compiler.parser.impl.tokens;
+package eu.bibl.cfide.engine.compiler.parser.cfideimpl.tokens;
 
-import eu.bibl.cfide.engine.compiler.parser.tokens.ParserToken;
+import eu.bibl.cfide.engine.compiler.parser.ParserToken;
 
 public class StringLiteralToken extends ParserToken {
 	
 	protected String value;
 	
 	public StringLiteralToken(String value) {
+		super(1);
 		this.value = value;
 	}
 	

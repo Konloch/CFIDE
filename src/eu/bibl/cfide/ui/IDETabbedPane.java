@@ -30,6 +30,7 @@ public class IDETabbedPane extends JTabbedPane {
 		}
 		CFIDEProject proj = ProjectUtils.newProject(location);
 		String tabName = loc.getName().substring(0, loc.getName().length() - 4);// remove .jar from the end of the name
+		proj.putProperty(CFIDEProject.COMPILER_CLASS, CFIDECompiler.class.getCanonicalName());
 		ProjectPanel panel = new ProjectPanel(this, tabName, proj, new CFIDECompiler(proj));
 		addTab(tabName, panel);
 		panel.setupFinal();
@@ -52,9 +53,12 @@ public class IDETabbedPane extends JTabbedPane {
 			className = proj.getProperty(CFIDEProject.COMPILER_CLASS, CFIDECompiler.class.getCanonicalName());
 			Class<?> c = Class.forName(className);
 			for (Constructor<?> constructor : c.getDeclaredConstructors()) {
-				if (constructor.getName().endsWith("CFIDEProject)")) { // because the compiler constructor needs to take a project instance to init the builder and parse
+				if (constructor.toString().endsWith("CFIDEProject)")) { // because the compiler constructor needs to take a project instance to init the builder and parse
 					compilerImpl = (BasicSourceCompiler<ClassNode[]>) constructor.newInstance(proj);
 				}
+			}
+			if (compilerImpl == null) {
+				compilerImpl = new CFIDECompiler(proj);
 			}
 		} catch (Exception e) {
 			System.out.println("Error loading custom compiler: " + className);

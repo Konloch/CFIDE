@@ -11,6 +11,7 @@ import javax.swing.JLabel;
 import javax.swing.JMenuItem;
 import javax.swing.JPanel;
 import javax.swing.JPopupMenu;
+import javax.swing.SwingUtilities;
 
 import org.fife.ui.rsyntaxtextarea.RSyntaxTextArea;
 import org.fife.ui.rtextarea.RTextScrollPane;
@@ -138,5 +139,21 @@ public class EditorTextTab extends RTextScrollPane implements MouseListener, Act
 	@Override
 	public void actionPerformed(ActionEvent e) {
 		tabbedPane.remove(EditorTextTab.this);
+	}
+	
+	public void setText(String text) {
+		getTextArea().setText(text);
+		SwingUtilities.invokeLater(RESET_VIEW_RUNNABLE);
+	}
+	
+	protected ResetViewRunnable RESET_VIEW_RUNNABLE = new ResetViewRunnable(); // shared scrollpane scroller, technically not thread safe.
+	
+	protected class ResetViewRunnable implements Runnable {
+		
+		@Override
+		public void run() {
+			getHorizontalScrollBar().setValue(0);
+			getVerticalScrollBar().setValue(0);
+		}
 	}
 }
