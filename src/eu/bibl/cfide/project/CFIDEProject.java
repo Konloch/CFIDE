@@ -17,6 +17,7 @@ public class CFIDEProject {
 	public static final String COMPILER_PARSER_CLASS = "compiler.parser.class";
 	public static final String COMPILER_BUILDER_CLASS = "compiler.builder.class";
 	
+	public static final String DECOMPILER_CLASS = "decompiler.class";
 	public static final String DECOMPILER_FIELD_DECOMPILATION_UNIT_CLASS = "decompiler.fndu.class";
 	public static final String DECOMPILER_METHOD_DECOMPILATION_UNIT_CLASS = "decompiler.mndu.class";
 	
