@@ -6,8 +6,8 @@ import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JTabbedPane;
 
-import eu.bibl.cfide.project.CFIDEProject;
-import eu.bibl.cfide.project.ProjectUtils;
+import eu.bibl.cfide.config.CFIDEConfig;
+import eu.bibl.cfide.config.ConfigUtils;
 
 public class IDETabbedPane extends JTabbedPane {
 	
@@ -24,10 +24,10 @@ public class IDETabbedPane extends JTabbedPane {
 			JOptionPane.showMessageDialog(null, "File doesn't exist.", "Invalid input file.", JOptionPane.ERROR_MESSAGE);
 			return;
 		}
-		CFIDEProject proj = ProjectUtils.newProject(location);
+		CFIDEConfig config = ConfigUtils.newConfig(location);
 		String tabName = loc.getName().substring(0, loc.getName().length() - 4);// remove .jar from the end of the name
 		
-		ProjectPanel panel = new ProjectPanel(this, tabName, proj);
+		ProjectPanel panel = new ProjectPanel(this, tabName, config);
 		addTab(tabName, panel);
 		panel.setupFinal();
 		setSelectedComponent(panel);
@@ -39,10 +39,10 @@ public class IDETabbedPane extends JTabbedPane {
 			JOptionPane.showMessageDialog(null, "File doesn't exist.", "Invalid input file.", JOptionPane.ERROR_MESSAGE);
 			return;
 		}
-		CFIDEProject proj = ProjectUtils.fromFile(loc);
+		CFIDEConfig config = ConfigUtils.fromFile(loc);
 		String tabName = loc.getName().substring(0, loc.getName().length() - 6);// remove .cfide from the end of the name
 		
-		ProjectPanel panel = new ProjectPanel(this, tabName, proj);
+		ProjectPanel panel = new ProjectPanel(this, tabName, config);
 		addTab(tabName, panel);
 		panel.setupFinal();
 		setSelectedComponent(panel);

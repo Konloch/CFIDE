@@ -20,8 +20,7 @@ public class Boot {
 		SwingUtilities.invokeLater(new Runnable() {
 			@Override
 			public void run() {
-				IDEFrame frame = new IDEFrame();
-				frame.setVisible(true);
+				new IDEFrame();
 			}
 		});
 	}

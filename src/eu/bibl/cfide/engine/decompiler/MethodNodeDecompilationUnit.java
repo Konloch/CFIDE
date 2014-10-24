@@ -7,14 +7,14 @@ import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.MethodNode;
 import org.objectweb.asm.tree.TryCatchBlockNode;
 
-import eu.bibl.cfide.project.CFIDEProject;
+import eu.bibl.cfide.config.CFIDEConfig;
 
 public class MethodNodeDecompilationUnit implements DecompilationUnit<MethodNode> {
 	
-	protected CFIDEProject project;
+	protected CFIDEConfig config;
 	
-	public MethodNodeDecompilationUnit(CFIDEProject project) {
-		this.project = project;
+	public MethodNodeDecompilationUnit(CFIDEConfig config) {
+		this.config = config;
 	}
 	
 	@Override

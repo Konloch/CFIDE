@@ -6,14 +6,14 @@ import java.util.List;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.FieldNode;
 
-import eu.bibl.cfide.project.CFIDEProject;
+import eu.bibl.cfide.config.CFIDEConfig;
 
 public class FieldNodeDecompilationUnit implements DecompilationUnit<FieldNode> {
 	
-	protected CFIDEProject project;
+	protected CFIDEConfig config;
 	
-	public FieldNodeDecompilationUnit(CFIDEProject project) {
-		this.project = project;
+	public FieldNodeDecompilationUnit(CFIDEConfig config) {
+		this.config = config;
 	}
 	
 	@Override

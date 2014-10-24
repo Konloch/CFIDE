@@ -32,11 +32,11 @@ import org.objectweb.asm.ClassWriter;
 
 import eu.bibl.banalysis.asm.ClassNode;
 import eu.bibl.banalysis.storage.classes.ClassContainer;
+import eu.bibl.cfide.config.CFIDEConfig;
 import eu.bibl.cfide.engine.compiler.BasicSourceCompiler;
 import eu.bibl.cfide.engine.compiler.CompilerException;
 import eu.bibl.cfide.engine.decompiler.DecompilationUnit;
 import eu.bibl.cfide.engine.decompiler.PrefixedStringBuilder;
-import eu.bibl.cfide.project.CFIDEProject;
 import eu.bibl.cfide.ui.ProjectPanel;
 import eu.bibl.cfide.ui.editor.EditorTabbedPane;
 import eu.bibl.cfide.ui.editor.EditorTextTab;
@@ -46,7 +46,7 @@ public class ClassViewerTree extends JTree implements TreeSelectionListener, Mou
 	private static final long serialVersionUID = -1731401270496103799L;
 	private static final Icon JAR_ICON = new ImageIcon("res/jar.png");
 	
-	protected CFIDEProject project;
+	protected CFIDEConfig config;
 	protected EditorTabbedPane etp;
 	protected PackageTreeNode root;
 	protected ClassContainer contents;
@@ -54,9 +54,9 @@ public class ClassViewerTree extends JTree implements TreeSelectionListener, Mou
 	protected DecompilationUnit<ClassNode> engine;
 	protected BasicSourceCompiler<ClassNode[]> compiler;
 	
-	public ClassViewerTree(CFIDEProject project, EditorTabbedPane etp, String jarName, ClassContainer contents, ProjectPanel projectPanel, DecompilationUnit<ClassNode> engine, BasicSourceCompiler<ClassNode[]> compiler) {
+	public ClassViewerTree(CFIDEConfig config, EditorTabbedPane etp, String jarName, ClassContainer contents, ProjectPanel projectPanel, DecompilationUnit<ClassNode> engine, BasicSourceCompiler<ClassNode[]> compiler) {
 		super(new DefaultPackageTreeNode(jarName));
-		this.project = project;
+		this.config = config;
 		this.etp = etp;
 		this.contents = contents;
 		this.projectPanel = projectPanel;
@@ -131,7 +131,7 @@ public class ClassViewerTree extends JTree implements TreeSelectionListener, Mou
 		
 		boolean listInnerClasses = false;
 		try {
-			listInnerClasses = project.getProperty(CFIDEProject.TREE_LIST_INNER_CLASSES, false);
+			listInnerClasses = config.getProperty(CFIDEConfig.TREE_LIST_INNER_CLASSES_KEY, false);
 		} catch (Exception e) {
 			/* ignored */
 		}

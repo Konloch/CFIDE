@@ -24,12 +24,12 @@ import javax.swing.filechooser.FileNameExtensionFilter;
 import eu.bibl.banalysis.asm.ClassNode;
 import eu.bibl.bio.JarInfo;
 import eu.bibl.bio.jfile.in.JarDownloader;
+import eu.bibl.cfide.config.CFIDEConfig;
+import eu.bibl.cfide.config.ConfigUtils;
 import eu.bibl.cfide.engine.compiler.BasicSourceCompiler;
 import eu.bibl.cfide.engine.compiler.CFIDECompiler;
 import eu.bibl.cfide.engine.decompiler.ClassNodeDecompilationUnit;
 import eu.bibl.cfide.engine.decompiler.DecompilationUnit;
-import eu.bibl.cfide.project.CFIDEProject;
-import eu.bibl.cfide.project.ProjectUtils;
 import eu.bibl.cfide.ui.editor.EditorTabbedPane;
 import eu.bibl.cfide.ui.editor.EditorTextTab;
 import eu.bibl.cfide.ui.tree.ClassViewerTree;
@@ -40,7 +40,7 @@ public class ProjectPanel extends JPanel implements MouseListener, ActionListene
 	
 	protected JTabbedPane tabbedPane;
 	protected String tabName;
-	protected CFIDEProject project;
+	protected CFIDEConfig config;
 	protected JSplitPane splitPane;
 	protected JarDownloader dl;
 	protected JScrollPane scrollPane;
@@ -48,24 +48,24 @@ public class ProjectPanel extends JPanel implements MouseListener, ActionListene
 	protected EditorTabbedPane etp;
 	protected BasicSourceCompiler<ClassNode[]> compiler;
 	
-	public ProjectPanel(JTabbedPane tabbedPane, String tabName, CFIDEProject project) {
+	public ProjectPanel(JTabbedPane tabbedPane, String tabName, CFIDEConfig config) {
 		super(new BorderLayout());
 		this.tabbedPane = tabbedPane;
 		this.tabName = tabName;
-		this.project = project;
+		this.config = config;
 		init();
 	}
 	
 	private void init() {
-		File jarFile = new File(project.<String> getProperty(CFIDEProject.JAR_LOCATION_KEY));
+		File jarFile = new File(config.<String> getProperty(CFIDEConfig.JAR_LOCATION_KEY));
 		dl = new JarDownloader(new JarInfo(jarFile));
 		if (!dl.parse())
 			return;
 		
 		splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT);
-		etp = new EditorTabbedPane(project);
+		etp = new EditorTabbedPane(config);
 		compiler = getCompilerImpl();
-		tree = new ClassViewerTree(project, etp, jarFile.getName(), dl.getContents(), this, getDecompilerImpl(), compiler);
+		tree = new ClassViewerTree(config, etp, jarFile.getName(), dl.getContents(), this, getDecompilerImpl(), compiler);
 		splitPane.setResizeWeight(0.115D);
 		scrollPane = new JScrollPane(tree);
 		splitPane.add(scrollPane);
@@ -80,21 +80,21 @@ public class ProjectPanel extends JPanel implements MouseListener, ActionListene
 		DecompilationUnit<ClassNode> decompilerImpl = null;
 		String className = null;
 		try {
-			className = project.getProperty(CFIDEProject.DECOMPILER_CLASS, ClassNodeDecompilationUnit.class.getCanonicalName());
+			className = config.getProperty(CFIDEConfig.DECOMPILER_CLASS_KEY, ClassNodeDecompilationUnit.class.getCanonicalName());
 			Class<?> c = Class.forName(className);
 			for (Constructor<?> constructor : c.getDeclaredConstructors()) {
-				if (constructor.toString().equals("(eu.bibl.cfide.project.CFIDEProject,eu.bibl.banalysis.storage.classes.ClassContainer)")) { // because the compiler constructor needs to take a project instance to init the builder and parse
-					decompilerImpl = (DecompilationUnit<ClassNode>) constructor.newInstance(project, dl.getContents());
+				if (constructor.toString().equals("(eu.bibl.cfide.config.CFIDEConfig,eu.bibl.banalysis.storage.classes.ClassContainer)")) {
+					decompilerImpl = (DecompilationUnit<ClassNode>) constructor.newInstance(config, dl.getContents());
 				}
 			}
 			if (decompilerImpl == null) {
-				decompilerImpl = new ClassNodeDecompilationUnit(project, dl.getContents());
+				decompilerImpl = new ClassNodeDecompilationUnit(config, dl.getContents());
 			}
 		} catch (Exception e) {
 			System.out.println("Error loading custom compiler: " + className);
 			e.printStackTrace();
-			project.putProperty(CFIDEProject.DECOMPILER_CLASS, ClassNodeDecompilationUnit.class.getCanonicalName());
-			decompilerImpl = new ClassNodeDecompilationUnit(project, dl.getContents());
+			config.putProperty(CFIDEConfig.DECOMPILER_CLASS_KEY, ClassNodeDecompilationUnit.class.getCanonicalName());
+			decompilerImpl = new ClassNodeDecompilationUnit(config, dl.getContents());
 		}
 		return decompilerImpl;
 	}
@@ -104,21 +104,21 @@ public class ProjectPanel extends JPanel implements MouseListener, ActionListene
 		BasicSourceCompiler<ClassNode[]> compilerImpl = null;
 		String className = null;
 		try {
-			className = project.getProperty(CFIDEProject.COMPILER_CLASS, CFIDECompiler.class.getCanonicalName());
+			className = config.getProperty(CFIDEConfig.COMPILER_CLASS_KEY, CFIDECompiler.class.getCanonicalName());
 			Class<?> c = Class.forName(className);
 			for (Constructor<?> constructor : c.getDeclaredConstructors()) {
-				if (constructor.toString().endsWith("CFIDEProject)")) { // because the compiler constructor needs to take a project instance to init the builder and parse
-					compilerImpl = (BasicSourceCompiler<ClassNode[]>) constructor.newInstance(project);
+				if (constructor.toString().endsWith("CFIDEConfig)")) {
+					compilerImpl = (BasicSourceCompiler<ClassNode[]>) constructor.newInstance(config);
 				}
 			}
 			if (compilerImpl == null) {
-				compilerImpl = new CFIDECompiler(project);
+				compilerImpl = new CFIDECompiler(config);
 			}
 		} catch (Exception e) {
 			System.out.println("Error loading custom compiler: " + className);
 			e.printStackTrace();
-			project.putProperty(CFIDEProject.COMPILER_CLASS, CFIDECompiler.class.getCanonicalName());
-			compilerImpl = new CFIDECompiler(project);
+			config.putProperty(CFIDEConfig.COMPILER_CLASS_KEY, CFIDECompiler.class.getCanonicalName());
+			compilerImpl = new CFIDECompiler(config);
 		}
 		return compilerImpl;
 	}
@@ -149,7 +149,7 @@ public class ProjectPanel extends JPanel implements MouseListener, ActionListene
 							return;
 					}
 					// if code reaches here, user pressed yes button
-					ProjectUtils.save(project, file);
+					ConfigUtils.save(config, file, true);
 				}
 			}
 		});

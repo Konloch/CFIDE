@@ -2,20 +2,20 @@ package eu.bibl.cfide.engine.compiler;
 
 import java.util.List;
 
+import eu.bibl.cfide.config.CFIDEConfig;
 import eu.bibl.cfide.engine.compiler.builder.IBuilder;
 import eu.bibl.cfide.engine.compiler.parser.BasicTokenParser;
 import eu.bibl.cfide.engine.compiler.parser.ParserToken;
 import eu.bibl.cfide.engine.compiler.parser.cfideimpl.BytecodeSourceParser;
-import eu.bibl.cfide.project.CFIDEProject;
 
 public abstract class BasicSourceCompiler<T> implements ICompiler<T, String> {
 	
-	protected CFIDEProject project;
+	protected CFIDEConfig config;
 	protected BasicTokenParser tokenParser;
 	protected IBuilder<T, List<ParserToken>> tokenBuilder;
 	
-	public BasicSourceCompiler(CFIDEProject project) {
-		this.project = project;
+	public BasicSourceCompiler(CFIDEConfig config) {
+		this.config = config;
 		this.tokenBuilder = getBuilderImpl();
 		tokenParser = getTokenParserImpl();
 	}

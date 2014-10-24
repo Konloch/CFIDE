@@ -1,9 +1,18 @@
 package eu.bibl.cfide.ui;
 
+import static eu.bibl.cfide.config.GlobalConfig.FRAME_HEIGHT_KEY;
+import static eu.bibl.cfide.config.GlobalConfig.FRAME_LOCATION_X_KEY;
+import static eu.bibl.cfide.config.GlobalConfig.FRAME_LOCATION_Y_KEY;
+import static eu.bibl.cfide.config.GlobalConfig.FRAME_WIDTH_KEY;
+import static eu.bibl.cfide.config.GlobalConfig.GLOBAL_CONFIG;
+
 import java.awt.BorderLayout;
 import java.awt.Dimension;
+import java.awt.Point;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.ComponentEvent;
+import java.awt.event.ComponentListener;
 import java.io.File;
 
 import javax.swing.JFileChooser;
@@ -13,17 +22,22 @@ import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
 import javax.swing.filechooser.FileNameExtensionFilter;
 
-public class IDEFrame extends JFrame implements ActionListener {
+public class IDEFrame extends JFrame implements ActionListener, ComponentListener {
 	
 	private static final long serialVersionUID = 6900788093562837072L;
 	
-	private static final Dimension FRAME_SIZE = new Dimension(800, 600);
+	protected static Dimension FRAME_SIZE;
 	
 	private IDETabbedPane idePanel;
 	
 	public IDEFrame() {
 		super("CFIDE - #Bibl");
 		setDefaultCloseOperation(EXIT_ON_CLOSE);
+		
+		double sizeX = GLOBAL_CONFIG.getProperty(FRAME_WIDTH_KEY, 800D);
+		double sizeY = GLOBAL_CONFIG.getProperty(FRAME_HEIGHT_KEY, 600D);
+		FRAME_SIZE = new Dimension((int) sizeX, (int) sizeY);
+		
 		setSize(FRAME_SIZE);
 		setPreferredSize(FRAME_SIZE);
 		setLayout(new BorderLayout());
@@ -33,7 +47,22 @@ public class IDEFrame extends JFrame implements ActionListener {
 		add(idePanel);
 		
 		pack();
-		setLocationRelativeTo(null);
+		
+		if (GLOBAL_CONFIG.exists(FRAME_LOCATION_X_KEY) && GLOBAL_CONFIG.exists(FRAME_LOCATION_Y_KEY)) {
+			double locX = GLOBAL_CONFIG.<Double> getProperty(FRAME_LOCATION_X_KEY);
+			double locY = GLOBAL_CONFIG.<Double> getProperty(FRAME_LOCATION_Y_KEY);
+			setLocation(new Point((int) locX, (int) locY));
+		} else {
+			setLocationRelativeTo(null);
+		}
+		
+		setVisible(true);
+		
+		Point loc = getLocationOnScreen();
+		GLOBAL_CONFIG.putProperty(FRAME_LOCATION_X_KEY, Integer.valueOf(loc.x));
+		GLOBAL_CONFIG.putProperty(FRAME_LOCATION_Y_KEY, Integer.valueOf(loc.y));
+		
+		addComponentListener(this);
 	}
 	
 	private void createJMenuBar() {
@@ -83,5 +112,27 @@ public class IDEFrame extends JFrame implements ActionListener {
 		} else if (e.getActionCommand().equals("exit")) {
 			System.exit(1);
 		}
+	}
+	
+	@Override
+	public void componentResized(ComponentEvent e) {
+		Dimension size = getSize();
+		GLOBAL_CONFIG.putProperty(FRAME_WIDTH_KEY, Integer.valueOf(size.width));
+		GLOBAL_CONFIG.putProperty(FRAME_HEIGHT_KEY, Integer.valueOf(size.height));
+	}
+	
+	@Override
+	public void componentMoved(ComponentEvent e) {
+		Point loc = getLocationOnScreen();
+		GLOBAL_CONFIG.putProperty(FRAME_LOCATION_X_KEY, Integer.valueOf(loc.x));
+		GLOBAL_CONFIG.putProperty(FRAME_LOCATION_Y_KEY, Integer.valueOf(loc.y));
+	}
+	
+	@Override
+	public void componentShown(ComponentEvent e) {
+	}
+	
+	@Override
+	public void componentHidden(ComponentEvent e) {
 	}
 }

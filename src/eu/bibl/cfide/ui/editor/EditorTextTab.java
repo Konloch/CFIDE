@@ -16,21 +16,21 @@ import javax.swing.SwingUtilities;
 import org.fife.ui.rsyntaxtextarea.RSyntaxTextArea;
 import org.fife.ui.rtextarea.RTextScrollPane;
 
-import eu.bibl.cfide.project.CFIDEProject;
+import eu.bibl.cfide.config.CFIDEConfig;
 import eu.bibl.cfide.ui.UISettings;
 
 public class EditorTextTab extends RTextScrollPane implements MouseListener, ActionListener {
 	
 	private static final long serialVersionUID = -9001184665877228717L;
 	
-	protected CFIDEProject project;
+	protected CFIDEConfig config;
 	protected EditorTabbedPane tabbedPane;
 	protected String title;
 	protected JPopupMenu popupMenu;
 	
-	public EditorTextTab(CFIDEProject project, EditorTabbedPane tabbedPane, String title) {
+	public EditorTextTab(CFIDEConfig config, EditorTabbedPane tabbedPane, String title) {
 		super(new RSyntaxTextArea());
-		this.project = project;
+		this.config = config;
 		this.tabbedPane = tabbedPane;
 		this.title = title;
 		init();

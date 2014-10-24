@@ -13,7 +13,7 @@ import org.objectweb.asm.tree.MethodNode;
 
 import eu.bibl.banalysis.asm.ClassNode;
 import eu.bibl.banalysis.storage.classes.ClassContainer;
-import eu.bibl.cfide.project.CFIDEProject;
+import eu.bibl.cfide.config.CFIDEConfig;
 
 public class ClassNodeDecompilationUnit implements DecompilationUnit<ClassNode> {
 	
@@ -30,13 +30,13 @@ public class ClassNodeDecompilationUnit implements DecompilationUnit<ClassNode> 
 		VERSION_TABLE.put(Opcodes.V1_8, "V1_8");
 	}
 	
-	protected CFIDEProject project;
+	protected CFIDEConfig config;
 	protected ClassContainer container;
 	private DecompilationUnit<FieldNode> fndu;
 	private DecompilationUnit<MethodNode> mndu;
 	
-	public ClassNodeDecompilationUnit(CFIDEProject project, ClassContainer container) {
-		this.project = project;
+	public ClassNodeDecompilationUnit(CFIDEConfig config, ClassContainer container) {
+		this.config = config;
 		this.container = container;
 		fndu = getFieldNodeDecompilationUnitImpl();
 		mndu = getMethodNodeDecompilationUnitImpl();
@@ -47,22 +47,22 @@ public class ClassNodeDecompilationUnit implements DecompilationUnit<ClassNode> 
 		DecompilationUnit<FieldNode> fnduImpl = null;
 		String className = null;
 		try {
-			className = project.getProperty(CFIDEProject.DECOMPILER_FIELD_DECOMPILATION_UNIT_CLASS, FieldNodeDecompilationUnit.class.getCanonicalName());
+			className = config.getProperty(CFIDEConfig.DECOMPILER_FIELD_DECOMPILATION_UNIT_CLASS_KEY, FieldNodeDecompilationUnit.class.getCanonicalName());
 			Class<?> c = Class.forName(className);
 			
 			for (Constructor<?> constructor : c.getDeclaredConstructors()) {
-				if (constructor.toString().endsWith("CFIDEProject)")) { // because the DecompilerVisitor<FieldNode> constructor needs to take a project instance to init the builder and parse
-					fnduImpl = (DecompilationUnit<FieldNode>) constructor.newInstance(project);
+				if (constructor.toString().endsWith("CFIDEConfig)")) { // because the DecompilerVisitor<FieldNode> constructor needs to take a config instance to init the builder and parse
+					fnduImpl = (DecompilationUnit<FieldNode>) constructor.newInstance(config);
 				}
 			}
 			if (fnduImpl == null) {
-				fnduImpl = new FieldNodeDecompilationUnit(project);
+				fnduImpl = new FieldNodeDecompilationUnit(config);
 			}
 		} catch (Exception e) {
 			System.out.println("Error loading custom DecompilationVisitor<FieldNode>: " + className);
 			e.printStackTrace();
-			project.putProperty(CFIDEProject.DECOMPILER_FIELD_DECOMPILATION_UNIT_CLASS, FieldNodeDecompilationUnit.class.getCanonicalName());
-			fnduImpl = new FieldNodeDecompilationUnit(project);
+			config.putProperty(CFIDEConfig.DECOMPILER_FIELD_DECOMPILATION_UNIT_CLASS_KEY, FieldNodeDecompilationUnit.class.getCanonicalName());
+			fnduImpl = new FieldNodeDecompilationUnit(config);
 		}
 		return fnduImpl;
 	}
@@ -72,22 +72,22 @@ public class ClassNodeDecompilationUnit implements DecompilationUnit<ClassNode> 
 		DecompilationUnit<MethodNode> mnduImpl = null;
 		String className = null;
 		try {
-			className = project.getProperty(CFIDEProject.DECOMPILER_METHOD_DECOMPILATION_UNIT_CLASS, MethodNodeDecompilationUnit.class.getCanonicalName());
+			className = config.getProperty(CFIDEConfig.DECOMPILER_METHOD_DECOMPILATION_UNIT_CLASS_KEY, MethodNodeDecompilationUnit.class.getCanonicalName());
 			Class<?> c = Class.forName(className);
 			
 			for (Constructor<?> constructor : c.getDeclaredConstructors()) {
-				if (constructor.toString().endsWith("CFIDEProject)")) { // because the DecompilerVisitor<MethodNode> constructor needs to take a project instance to init the builder and parse
-					mnduImpl = (DecompilationUnit<MethodNode>) constructor.newInstance(project);
+				if (constructor.toString().endsWith("CFIDEConfig)")) { // because the DecompilerVisitor<MethodNode> constructor needs to take a config instance to init the builder and parse
+					mnduImpl = (DecompilationUnit<MethodNode>) constructor.newInstance(config);
 				}
 			}
 			if (mnduImpl == null) {
-				mnduImpl = new MethodNodeDecompilationUnit(project);
+				mnduImpl = new MethodNodeDecompilationUnit(config);
 			}
 		} catch (Exception e) {
 			System.out.println("Error loading custom DecompilationVisitor<MethodNode>: " + className);
 			e.printStackTrace();
-			project.putProperty(CFIDEProject.DECOMPILER_METHOD_DECOMPILATION_UNIT_CLASS, MethodNodeDecompilationUnit.class.getCanonicalName());
-			mnduImpl = new MethodNodeDecompilationUnit(project);
+			config.putProperty(CFIDEConfig.DECOMPILER_METHOD_DECOMPILATION_UNIT_CLASS_KEY, MethodNodeDecompilationUnit.class.getCanonicalName());
+			mnduImpl = new MethodNodeDecompilationUnit(config);
 		}
 		return mnduImpl;
 	}
