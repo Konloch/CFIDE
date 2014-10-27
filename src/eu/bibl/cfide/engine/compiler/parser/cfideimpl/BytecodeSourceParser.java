@@ -7,6 +7,8 @@ import eu.bibl.cfide.engine.compiler.parser.BasicTokenParser;
 import eu.bibl.cfide.engine.compiler.parser.ParserException;
 import eu.bibl.cfide.engine.compiler.parser.ParserToken;
 import eu.bibl.cfide.engine.compiler.parser.cfideimpl.tokens.member.ClassMemberToken;
+import eu.bibl.cfide.engine.compiler.parser.cfideimpl.tokens.member.FieldMemberToken;
+import eu.bibl.cfide.engine.compiler.parser.cfideimpl.tokens.member.MethodMemberToken;
 import eu.bibl.cfide.engine.compiler.parser.cfideimpl.tokens.using.UsingToken;
 
 public class BytecodeSourceParser extends BasicTokenParser {
@@ -16,20 +18,37 @@ public class BytecodeSourceParser extends BasicTokenParser {
 		List<String> lexedTokens = scanStringTokens(text);
 		List<ParserToken> tokens = new ArrayList<ParserToken>();
 		
-		for (int i = 0; i < lexedTokens.size(); i++) {
-			String sToken = lexedTokens.get(i);// s - string
-			/*
-			 * if (sToken.startsWith("\"")) {
-			 * tokens.add(new StringLiteralToken(sToken));
-			 * } else
-			 */
-			if (sToken.toUpperCase().equals("using")) {
-				tokens.add(UsingToken.getByKey(lexedTokens.get(++i), lexedTokens.get(++i)));
-			} else if (sToken.equals("{")) {
-				ClassMemberToken.create(lexedTokens, i);
-				return tokens;
+		int line = 1; // track line numbers
+		try {
+			for (int i = 0; i < lexedTokens.size(); i++) {
+				String sToken = lexedTokens.get(i);// s - string
+				String uToken = sToken.toUpperCase();// case insensitive
+				
+				if (sToken.equals("\n")) {
+					line++;
+					continue;
+				}
+				
+				if (uToken.equals("USING")) {
+					tokens.add(UsingToken.create(lexedTokens, i));
+				} else if (uToken.equals("CLASS:")) {
+					ParserToken token = ClassMemberToken.create(lexedTokens, i);
+					tokens.add(token);
+					System.out.println("Line: " + line + " " + token);
+				} else if (uToken.equals("FIELD:")) {
+					ParserToken token = FieldMemberToken.create(lexedTokens, i + 1);
+					tokens.add(token);
+					System.out.println("Line: " + line + " " + token);
+				} else if (uToken.equals("METHOD:")) {
+					ParserToken token = MethodMemberToken.create(lexedTokens, i + 1);
+					tokens.add(token);
+					System.out.println("Line: " + line + " " + token);
+				}
 			}
+		} catch (Exception e) {
+			throw new ParserException("Parser error on line " + line, e);
 		}
+		System.out.println(line);
 		return tokens;
 	}
 	
@@ -51,7 +70,8 @@ public class BytecodeSourceParser extends BasicTokenParser {
 	 * <li>ldc</li>,
 	 * <li>"my name is so \"cool\""</li>
 	 * </ul>
-	 * Also supports single line comments, but does not add them as data to return.
+	 * Also supports single line comments, but does not add them as data to return. <br>
+	 * The returned list contains '\n' characters if present so provide line number support.
 	 * @see TextToBytecodeParser#getNextStringToken(char[], int)
 	 * @param text Raw input text to
 	 * @return {@link List} of Strings
@@ -65,6 +85,7 @@ public class BytecodeSourceParser extends BasicTokenParser {
 			if (blocking) {// if we're currently in a comment
 				if (c == '\n') {// if new line, comment ends, start parsing
 					blocking = false;
+					tokens.add("\n");
 					continue;
 				}
 			} else {
@@ -74,8 +95,23 @@ public class BytecodeSourceParser extends BasicTokenParser {
 				} else {
 					String token = getNextStringToken(chars, i);
 					if (token.length() > 0) { // prevent empty tokens: http://xn--wxa.pw/dfk
-						tokens.add(token);
-						i += token.length();// skip the amount of characters we just read
+						int read = token.length();
+						
+						if (token.contains("\n")) {
+							for (int j = i; j < (i + read); j++) {
+								char c1 = chars[j];
+								if (c1 == '\n') {
+									tokens.add("\n");
+								}
+							}
+							token = token.replace("\n", "");
+							read = token.length();
+							tokens.add(token);
+							i += read;
+						} else {
+							tokens.add(token);
+							i += read;// skip the amount of characters we just read
+						}
 					}
 				}
 			}
@@ -85,12 +121,13 @@ public class BytecodeSourceParser extends BasicTokenParser {
 	
 	/**
 	 * Reads characters until it finds either a line break, a space or a tab. <br>
+	 * <b>N.B.</b> The line break is returned at the end.<br>
 	 * This method also has the ability to read string literals with escaped strings inside of them. <br>
 	 * <code>"\"\""</code> <br>
 	 * would be 1 token. <br>
 	 * @param chars Input character array
 	 * @param start Last tokens end index
-	 * @return Next nonwhitespace valid token
+	 * @return Next nonwhitespace (except '\n') valid token
 	 */
 	protected String getNextStringToken(char[] chars, int start) {
 		StringBuilder sb = new StringBuilder();
@@ -103,12 +140,14 @@ public class BytecodeSourceParser extends BasicTokenParser {
 				if (c == '"') {
 					locked = true;
 				} else {
-					if (Character.isWhitespace(c))
+					if (Character.isWhitespace(c) && (c != '\n')) {
 						break;
-					if (c == '\n')
+					} else if (c == '\n') {
+						sb.append(c);
 						break;
+					}
 				}
-			} else {
+			} else {// in a string "" block, don't break loop on '\n'
 				if ((c == '"') && (chars[start - 2] != '\\')) { // check for unescapped " and -2 because of the ++ before
 					locked = false;
 				}

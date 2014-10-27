@@ -12,6 +12,7 @@ public final class GlobalConfig extends CFIDEConfig {
 	// public static final String FRAME_SIZE_KEY = "frame.size";
 	// public static final String FRAME_LOCATION_KEY = "frame.loc";
 	
+	public static final String FRAME_MAXIMIZED_KEY = "frame.size.max";
 	public static final String FRAME_WIDTH_KEY = "frame.size.width";
 	public static final String FRAME_HEIGHT_KEY = "frame.size.height";
 	public static final String FRAME_LOCATION_X_KEY = "frame.loc.x";

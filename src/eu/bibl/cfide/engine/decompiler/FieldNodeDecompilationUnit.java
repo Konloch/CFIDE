@@ -18,6 +18,7 @@ public class FieldNodeDecompilationUnit implements DecompilationUnit<FieldNode> 
 	
 	@Override
 	public PrefixedStringBuilder decompile(PrefixedStringBuilder sb, FieldNode f) {
+		sb.append("field: ");
 		String s = getAccessString(f.access);
 		sb.append(s);
 		if (s.length() > 0)
@@ -31,6 +32,9 @@ public class FieldNodeDecompilationUnit implements DecompilationUnit<FieldNode> 
 				sb.append("\"");
 				sb.append(f.value);
 				sb.append("\"");
+				sb.append(" (");
+				sb.append(f.value.getClass().getCanonicalName());
+				sb.append(")");
 			} else {
 				sb.append(f.value);
 				sb.append(" (");
@@ -38,10 +42,11 @@ public class FieldNodeDecompilationUnit implements DecompilationUnit<FieldNode> 
 				sb.append(")");
 			}
 		}
+		sb.append(" :end");
 		return sb;
 	}
 	
-	private static String getAccessString(int access) {
+	public static String getAccessString(int access) {
 		List<String> tokens = new ArrayList<String>();
 		if ((access & Opcodes.ACC_PUBLIC) != 0)
 			tokens.add("public");

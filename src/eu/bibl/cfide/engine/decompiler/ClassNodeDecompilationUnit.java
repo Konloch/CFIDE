@@ -109,6 +109,7 @@ public class ClassNodeDecompilationUnit implements DecompilationUnit<ClassNode> 
 		sb.append(VERSION_TABLE.get(cn.version));
 		sb.append("\n\n");
 		
+		sb.append("class: ");
 		sb.append(getAccessString(cn.access));
 		sb.append(" ");
 		sb.append(cn.name);
@@ -152,15 +153,17 @@ public class ClassNodeDecompilationUnit implements DecompilationUnit<ClassNode> 
 						System.out.println("Inner: " + innerClassName + " parent: " + outerClassName);
 						sb.appendPrefix("     ");
 						sb.append("\n\n");
-						buildClassNodeRepresentation(sb, outerClassName, cn1);
+						sb = buildClassNodeRepresentation(sb, outerClassName, cn1);
 						sb.trimPrefix(5);
 						done++;
 					}
 				} else {
+					sb.appendPrefix("     ");
 					sb.append("\n");
-					sb.append("NULL INNER CLASS: ");
+					sb.append("NULL_INNER_CLASS: ");
 					sb.append(innerClassName);
 					sb.append("\n\n");
+					sb.trimPrefix(5);
 				}
 			}
 		}

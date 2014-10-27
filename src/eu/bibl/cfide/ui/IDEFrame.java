@@ -3,6 +3,7 @@ package eu.bibl.cfide.ui;
 import static eu.bibl.cfide.config.GlobalConfig.FRAME_HEIGHT_KEY;
 import static eu.bibl.cfide.config.GlobalConfig.FRAME_LOCATION_X_KEY;
 import static eu.bibl.cfide.config.GlobalConfig.FRAME_LOCATION_Y_KEY;
+import static eu.bibl.cfide.config.GlobalConfig.FRAME_MAXIMIZED_KEY;
 import static eu.bibl.cfide.config.GlobalConfig.FRAME_WIDTH_KEY;
 import static eu.bibl.cfide.config.GlobalConfig.GLOBAL_CONFIG;
 
@@ -13,6 +14,8 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ComponentEvent;
 import java.awt.event.ComponentListener;
+import java.awt.event.WindowEvent;
+import java.awt.event.WindowStateListener;
 import java.io.File;
 
 import javax.swing.JFileChooser;
@@ -22,11 +25,9 @@ import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
 import javax.swing.filechooser.FileNameExtensionFilter;
 
-public class IDEFrame extends JFrame implements ActionListener, ComponentListener {
+public class IDEFrame extends JFrame implements ActionListener, ComponentListener, WindowStateListener {
 	
 	private static final long serialVersionUID = 6900788093562837072L;
-	
-	protected static Dimension FRAME_SIZE;
 	
 	private IDETabbedPane idePanel;
 	
@@ -36,10 +37,14 @@ public class IDEFrame extends JFrame implements ActionListener, ComponentListene
 		
 		double sizeX = GLOBAL_CONFIG.getProperty(FRAME_WIDTH_KEY, 800D);
 		double sizeY = GLOBAL_CONFIG.getProperty(FRAME_HEIGHT_KEY, 600D);
-		FRAME_SIZE = new Dimension((int) sizeX, (int) sizeY);
+		Dimension size = new Dimension((int) sizeX, (int) sizeY);
+		setSize(size);
+		setPreferredSize(size);
 		
-		setSize(FRAME_SIZE);
-		setPreferredSize(FRAME_SIZE);
+		if (GLOBAL_CONFIG.getProperty(FRAME_MAXIMIZED_KEY, false)) {// do both a size set and maximize cuz
+			setExtendedState(getExtendedState() | JFrame.MAXIMIZED_BOTH);// when unmaximising the window, it goes really small
+		}
+		
 		setLayout(new BorderLayout());
 		
 		createJMenuBar();
@@ -63,6 +68,7 @@ public class IDEFrame extends JFrame implements ActionListener, ComponentListene
 		GLOBAL_CONFIG.putProperty(FRAME_LOCATION_Y_KEY, Integer.valueOf(loc.y));
 		
 		addComponentListener(this);
+		addWindowStateListener(this);
 	}
 	
 	private void createJMenuBar() {
@@ -117,6 +123,9 @@ public class IDEFrame extends JFrame implements ActionListener, ComponentListene
 	@Override
 	public void componentResized(ComponentEvent e) {
 		Dimension size = getSize();
+		if (size.equals(lastMax)) // resize event is called after window state maximize
+			return;
+		GLOBAL_CONFIG.putProperty(FRAME_MAXIMIZED_KEY, false);
 		GLOBAL_CONFIG.putProperty(FRAME_WIDTH_KEY, Integer.valueOf(size.width));
 		GLOBAL_CONFIG.putProperty(FRAME_HEIGHT_KEY, Integer.valueOf(size.height));
 	}
@@ -124,8 +133,19 @@ public class IDEFrame extends JFrame implements ActionListener, ComponentListene
 	@Override
 	public void componentMoved(ComponentEvent e) {
 		Point loc = getLocationOnScreen();
+		
 		GLOBAL_CONFIG.putProperty(FRAME_LOCATION_X_KEY, Integer.valueOf(loc.x));
 		GLOBAL_CONFIG.putProperty(FRAME_LOCATION_Y_KEY, Integer.valueOf(loc.y));
+	}
+	
+	protected Dimension lastMax = null;
+	
+	@Override
+	public void windowStateChanged(WindowEvent e) {
+		if ((e.getNewState() & MAXIMIZED_BOTH) != 0) {
+			GLOBAL_CONFIG.putProperty(FRAME_MAXIMIZED_KEY, true);
+			lastMax = getSize();
+		}
 	}
 	
 	@Override

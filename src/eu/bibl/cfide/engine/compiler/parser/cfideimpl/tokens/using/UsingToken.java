@@ -1,5 +1,8 @@
 package eu.bibl.cfide.engine.compiler.parser.cfideimpl.tokens.using;
 
+import java.util.List;
+
+import eu.bibl.cfide.engine.compiler.parser.ParserException;
 import eu.bibl.cfide.engine.compiler.parser.ParserToken;
 
 public abstract class UsingToken extends ParserToken {
@@ -15,6 +18,25 @@ public abstract class UsingToken extends ParserToken {
 		return val;
 	}
 	
+	public static UsingToken create(List<String> tokens, int memberStartIndex) throws ParserException {
+		String first = tokens.get(memberStartIndex);
+		if (first.equals("USING"))
+			memberStartIndex++;
+		return getByKey(tokens.get(memberStartIndex = findNextIndex(tokens, memberStartIndex++)), tokens.get(memberStartIndex = findNextIndex(tokens, memberStartIndex++)));
+	}
+	
+	protected static int findNextIndex(List<String> tokens, int index) {
+		while (tokens.size() > index) {
+			String token = tokens.get(index).toUpperCase();
+			
+			if (token.equals("\n")) {
+				return index;
+			}
+			index++;
+		}
+		return -1;
+	}
+	
 	public static UsingToken getByKey(String key, String val) {
 		key = key.toUpperCase();
 		switch (key) {
@@ -23,6 +45,6 @@ public abstract class UsingToken extends ParserToken {
 			case "VER":
 				return new UsingVerToken(val);
 		}
-		return null;
+		return null;// handle invalid keys in the builder
 	}
 }

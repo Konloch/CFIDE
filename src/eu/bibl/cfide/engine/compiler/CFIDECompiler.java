@@ -55,7 +55,7 @@ public class CFIDECompiler extends BasicSourceCompiler<ClassNode[]> {
 	public ClassNode[] compile(String source) throws CompilerException {
 		List<ParserToken> tokens = tokenParser.parse(source);
 		ClassNode[] builtObjects = tokenBuilder.build(tokens);
-		if ((builtObjects == null) || (builtObjects.length == 0))
+		if ((builtObjects == null))
 			throw new CompilerException("Object was not compiled successfully.");
 		return builtObjects;
 	}

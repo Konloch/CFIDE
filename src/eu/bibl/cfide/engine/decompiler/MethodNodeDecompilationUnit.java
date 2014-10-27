@@ -21,6 +21,7 @@ public class MethodNodeDecompilationUnit implements DecompilationUnit<MethodNode
 	public PrefixedStringBuilder decompile(PrefixedStringBuilder sb, MethodNode m) {
 		String s = getAccessString(m.access);
 		sb.append("     ");
+		sb.append("method: ");
 		sb.append(s);
 		if (s.length() > 0)
 			sb.append(" ");
@@ -69,7 +70,7 @@ public class MethodNodeDecompilationUnit implements DecompilationUnit<MethodNode
 		return sb;
 	}
 	
-	private static String getAccessString(int access) {
+	public static String getAccessString(int access) {
 		// public, protected, private, abstract, static,
 		// final, synchronized, native & strictfp are permitted
 		List<String> tokens = new ArrayList<String>();
