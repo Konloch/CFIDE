@@ -8,6 +8,7 @@ import eu.bibl.cfide.engine.compiler.parser.ParserException;
 import eu.bibl.cfide.engine.compiler.parser.ParserToken;
 import eu.bibl.cfide.engine.compiler.parser.cfideimpl.tokens.member.ClassMemberToken;
 import eu.bibl.cfide.engine.compiler.parser.cfideimpl.tokens.member.FieldMemberToken;
+import eu.bibl.cfide.engine.compiler.parser.cfideimpl.tokens.member.MemberCloseToken;
 import eu.bibl.cfide.engine.compiler.parser.cfideimpl.tokens.member.MethodMemberToken;
 import eu.bibl.cfide.engine.compiler.parser.cfideimpl.tokens.using.UsingToken;
 
@@ -27,28 +28,28 @@ public class BytecodeSourceParser extends BasicTokenParser {
 				if (sToken.equals("\n")) {
 					line++;
 					continue;
+				} else if (uToken.equals("}")) {
+					tokens.add(new MemberCloseToken());
 				}
 				
 				if (uToken.equals("USING")) {
-					tokens.add(UsingToken.create(lexedTokens, i));
+					ParserToken token = UsingToken.create(lexedTokens, i);
+					tokens.add(token);
 				} else if (uToken.equals("CLASS:")) {
 					ParserToken token = ClassMemberToken.create(lexedTokens, i);
 					tokens.add(token);
-					System.out.println("Line: " + line + " " + token);
 				} else if (uToken.equals("FIELD:")) {
 					ParserToken token = FieldMemberToken.create(lexedTokens, i + 1);
 					tokens.add(token);
-					System.out.println("Line: " + line + " " + token);
 				} else if (uToken.equals("METHOD:")) {
 					ParserToken token = MethodMemberToken.create(lexedTokens, i + 1);
 					tokens.add(token);
-					System.out.println("Line: " + line + " " + token);
 				}
 			}
 		} catch (Exception e) {
 			throw new ParserException("Parser error on line " + line, e);
 		}
-		System.out.println(line);
+		
 		return tokens;
 	}
 	

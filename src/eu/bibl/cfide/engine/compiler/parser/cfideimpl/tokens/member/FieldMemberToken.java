@@ -26,6 +26,22 @@ public class FieldMemberToken extends MemberToken {
 		this.valueType = valueType;
 	}
 	
+	public String getName() {
+		return name;
+	}
+	
+	public String getDesc() {
+		return desc;
+	}
+	
+	public String getValue() {
+		return value;
+	}
+	
+	public String getValueType() {
+		return valueType;
+	}
+	
 	@Override
 	public String toString() {
 		StringBuilder sb = new StringBuilder();

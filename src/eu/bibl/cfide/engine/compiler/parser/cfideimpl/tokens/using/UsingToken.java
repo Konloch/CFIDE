@@ -19,17 +19,19 @@ public abstract class UsingToken extends ParserToken {
 	}
 	
 	public static UsingToken create(List<String> tokens, int memberStartIndex) throws ParserException {
-		String first = tokens.get(memberStartIndex);
+		String first = tokens.get(memberStartIndex).toUpperCase();
 		if (first.equals("USING"))
 			memberStartIndex++;
-		return getByKey(tokens.get(memberStartIndex = findNextIndex(tokens, memberStartIndex++)), tokens.get(memberStartIndex = findNextIndex(tokens, memberStartIndex++)));
+		int tok1Index = findNextIndex(tokens, memberStartIndex++);
+		int tok2Index = findNextIndex(tokens, memberStartIndex);
+		return getByKey(tokens.get(tok1Index), tokens.get(tok2Index));
 	}
 	
 	protected static int findNextIndex(List<String> tokens, int index) {
 		while (tokens.size() > index) {
 			String token = tokens.get(index).toUpperCase();
 			
-			if (token.equals("\n")) {
+			if (!token.equals("\n")) {
 				return index;
 			}
 			index++;
@@ -45,6 +47,7 @@ public abstract class UsingToken extends ParserToken {
 			case "VER":
 				return new UsingVerToken(val);
 		}
-		return null;// handle invalid keys in the builder
+		throw new IllegalArgumentException("invalid key: " + key);
+		// return null;// handle invalid keys in the builder
 	}
 }

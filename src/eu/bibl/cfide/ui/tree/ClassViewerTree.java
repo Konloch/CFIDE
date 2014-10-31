@@ -5,10 +5,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
-import java.io.DataOutputStream;
 import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -28,13 +25,11 @@ import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeCellRenderer;
 import javax.swing.tree.TreePath;
 
-import org.objectweb.asm.ClassWriter;
-
 import eu.bibl.banalysis.asm.ClassNode;
 import eu.bibl.banalysis.storage.classes.ClassContainer;
+import eu.bibl.bio.jfile.out.CompleteJarDumper;
 import eu.bibl.cfide.config.CFIDEConfig;
 import eu.bibl.cfide.engine.compiler.BasicSourceCompiler;
-import eu.bibl.cfide.engine.compiler.CompilerException;
 import eu.bibl.cfide.engine.decompiler.DecompilationUnit;
 import eu.bibl.cfide.engine.decompiler.PrefixedStringBuilder;
 import eu.bibl.cfide.ui.ProjectPanel;
@@ -97,20 +92,14 @@ public class ClassViewerTree extends JTree implements TreeSelectionListener, Mou
 				if (selectedNode instanceof ClassTreeNode) {
 					ClassTreeNode ctn = (ClassTreeNode) selectedNode;
 					try {
-						ClassNode[] cns = compiler.compile(projectPanel.getText(ctn.getClassName()));
-						ClassWriter cw = new ClassWriter(0);
-						for (int i = 0; i < cns.length; i++) {
-							ClassNode cn = cns[i];
-							cn.accept(cw);
-							try {
-								DataOutputStream dos = new DataOutputStream(new FileOutputStream(new File("C:/Users/Bibl/Desktop/test.class")));
-								dos.write(cw.toByteArray());
-								dos.close();
-							} catch (IOException e1) {
-								e1.printStackTrace();
+						final ClassNode[] cns = compiler.compile(projectPanel.getText(ctn.getClassName()));
+						new Thread() {
+							@Override
+							public void run() {
+								new CompleteJarDumper(new ClassContainer(cns)).dump(new File("C:/Users/Bibl/Desktop/testjar1.jar"));
 							}
-						}
-					} catch (CompilerException e1) {
+						}.start();
+					} catch (Exception e1) {
 						JOptionPane.showMessageDialog(ClassViewerTree.this, e1.getMessage(), "Compiler error", JOptionPane.ERROR_MESSAGE);
 						e1.printStackTrace();
 					}

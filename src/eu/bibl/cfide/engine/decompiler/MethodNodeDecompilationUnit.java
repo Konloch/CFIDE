@@ -53,11 +53,11 @@ public class MethodNodeDecompilationUnit implements DecompilationUnit<MethodNode
 				sb.append("         ");
 				sb.append("TryCatch: L");
 				sb.append(insnPrinter.resolveLabel(tcbn.start));
-				sb.append(" -> L");
+				sb.append(" L");
 				sb.append(insnPrinter.resolveLabel(tcbn.end));
-				sb.append(" -> L");
+				sb.append(" L");
 				sb.append(insnPrinter.resolveLabel(tcbn.handler));
-				sb.append(" -> ");
+				sb.append(" ");
 				sb.append(tcbn.type);
 				sb.append("\n");
 			}

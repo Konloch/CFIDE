@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.ListIterator;
 
 import org.objectweb.asm.tree.FieldInsnNode;
+import org.objectweb.asm.tree.JumpInsnNode;
 import org.objectweb.asm.tree.LabelNode;
 import org.objectweb.asm.tree.LdcInsnNode;
 import org.objectweb.asm.tree.LookupSwitchInsnNode;
@@ -61,7 +62,18 @@ public class AdvancedInstructionPrinter extends InstructionPrinter {
 	}
 	
 	@Override
-	public int resolveLabel(LabelNode ln) {
+	protected String printJumpInsnNode(JumpInsnNode jin, ListIterator<?> it) {
+		String line = nameOpcode(jin.getOpcode()) + " L" + resolveLabel(jin.label);
+		return line;
+	}
+	
+	@Override
+	protected String printLabelnode(LabelNode label) {
+		return "L" + resolveLabel(label) + ":";
+	}
+	
+	@Override
+	protected int resolveLabel(LabelNode ln) {
 		return super.resolveLabel(ln);
 	}
 	

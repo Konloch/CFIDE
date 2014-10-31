@@ -1,4 +1,4 @@
-package eu.bibl.cfide.engine.compiler.parser.cfideimpl;
+package eu.bibl.cfide.engine.compiler.builder.cfideimpl;
 
 import org.objectweb.asm.Opcodes;
 

@@ -24,7 +24,7 @@ public class ClassMemberToken extends MemberToken {
 		return name;
 	}
 	
-	public String superName() {
+	public String getSuperName() {
 		return superName;
 	}
 	
