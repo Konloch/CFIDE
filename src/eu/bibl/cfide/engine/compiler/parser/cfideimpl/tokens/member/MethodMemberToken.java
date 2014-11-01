@@ -6,6 +6,8 @@ import java.util.List;
 import eu.bibl.banalysis.filter.Filter;
 import eu.bibl.cfide.engine.compiler.parser.ParserException;
 import eu.bibl.cfide.engine.decompiler.MethodNodeDecompilationUnit;
+import eu.bibl.cfide.engine.util.FilterCollection;
+import eu.bibl.cfide.engine.util.StringArrayReader;
 
 public class MethodMemberToken extends MemberToken {
 	
@@ -63,14 +65,7 @@ public class MethodMemberToken extends MemberToken {
 		}
 	};
 	
-	public static final Filter<String> NON_NEWLINE_FILTER = new Filter<String>() {
-		@Override
-		public boolean accept(String s) {
-			return !s.equals("\n");
-		}
-	};
-	
-	public static MethodMemberToken create(List<String> tokens, int memberStartIndex) throws ParserException {
+	public static MethodMemberToken create(StringArrayReader reader) throws ParserException {
 		int access = 0;
 		String name = null;
 		String desc = null;
@@ -80,12 +75,12 @@ public class MethodMemberToken extends MemberToken {
 		
 		boolean codeMode = false;
 		
-		for (int i = memberStartIndex; i < tokens.size(); i++) {
-			String sToken = tokens.get(i);
-			String uToken = sToken.toUpperCase();// // not really needed in method case
-			
+		while (reader.canReadNext()) {
+			String sToken = reader.read(FilterCollection.NON_NULL_NON_NEWLINE_FILTER);
+			String uToken = sToken.toUpperCase();
 			if (codeMode) {
 				if (sToken.equals("}")) {
+					reader.move(-1);
 					break;
 				} else {
 					if (!sToken.equals("\n")) {
@@ -97,25 +92,36 @@ public class MethodMemberToken extends MemberToken {
 					access |= ACCESS_VALUES.get(uToken);
 				} else if (sToken.equals("{")) {
 					codeMode = true;
-					int throwsIndex = findIndexPrev(tokens, i - 1, THROWS_FILTER);
-					String throwsToken = tokens.get(throwsIndex);
-					if (throwsToken.toUpperCase().equals("THROWS")) {
-						int j = throwsIndex;
-						desc = tokens.get(findIndexPrev(tokens, --j, NON_NEWLINE_FILTER));
-						name = tokens.get(findIndexPrev(tokens, --j, NON_NEWLINE_FILTER));
-						for (int k = throwsIndex + 1; k < (i - 1); k++) { // i="{" -1 to ignore it, throws+1 to ignore throws declaration
-							String kToken = tokens.get(k);
-							if (!kToken.equals("\n")) {
-								throwsList.add(kToken);
-							}
+					reader.move(-1);
+					String throwsToken = reader.readPrev(THROWS_FILTER);
+					String uThrowsToken = throwsToken.toUpperCase();
+					if (uThrowsToken.equals("THROWS")) {// public name desc throws exc, exc {
+						reader.markPos();// mark the 'throws'
+						desc = reader.readPrev(FilterCollection.NON_NULL_NON_NEWLINE_FILTER);
+						name = reader.readPrev(FilterCollection.NON_NULL_NON_NEWLINE_FILTER);
+						reader.resetPos();
+						reader.move(2);// +2
+						while (reader.canReadNext()) {
+							String excThrow = reader.read(FilterCollection.NON_NULL_NON_NEWLINE_FILTER);
+							if (excThrow.equals("{"))
+								break;
+							excThrow = excThrow.replace(",", "");
+							throwsList.add(excThrow);
 						}
-					} else {
-						int j = i - 1;
-						desc = tokens.get(findIndexPrev(tokens, --j, NON_NEWLINE_FILTER));
-						name = tokens.get(findIndexPrev(tokens, --j, NON_NEWLINE_FILTER));
+					} else if (uThrowsToken.equals("METHOD:")) {
+						reader.move(1);
+						while (reader.canReadNext()) {
+							String s = reader.read(FilterCollection.NON_NULL_NON_NEWLINE_FILTER);
+							if (!ACCESS_VALUES.containsKey(s))
+								break;
+						}
+						reader.move(1);
+						name = reader.read(FilterCollection.NON_NULL_NON_NEWLINE_FILTER);
+						desc = reader.read(FilterCollection.NON_NULL_NON_NEWLINE_FILTER);
 					}
 					continue;
 				} else if (sToken.equals("}")) {
+					reader.move(-1);
 					break;
 				}
 			}

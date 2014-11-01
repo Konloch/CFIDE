@@ -1,9 +1,9 @@
 package eu.bibl.cfide.engine.compiler.parser.cfideimpl.tokens.using;
 
-import java.util.List;
-
 import eu.bibl.cfide.engine.compiler.parser.ParserException;
 import eu.bibl.cfide.engine.compiler.parser.ParserToken;
+import eu.bibl.cfide.engine.util.FilterCollection;
+import eu.bibl.cfide.engine.util.StringArrayReader;
 
 public abstract class UsingToken extends ParserToken {
 	
@@ -18,25 +18,10 @@ public abstract class UsingToken extends ParserToken {
 		return val;
 	}
 	
-	public static UsingToken create(List<String> tokens, int memberStartIndex) throws ParserException {
-		String first = tokens.get(memberStartIndex).toUpperCase();
-		if (first.equals("USING"))
-			memberStartIndex++;
-		int tok1Index = findNextIndex(tokens, memberStartIndex++);
-		int tok2Index = findNextIndex(tokens, memberStartIndex);
-		return getByKey(tokens.get(tok1Index), tokens.get(tok2Index));
-	}
-	
-	protected static int findNextIndex(List<String> tokens, int index) {
-		while (tokens.size() > index) {
-			String token = tokens.get(index).toUpperCase();
-			
-			if (!token.equals("\n")) {
-				return index;
-			}
-			index++;
-		}
-		return -1;
+	public static UsingToken create(StringArrayReader reader) throws ParserException {
+		String key = reader.read(FilterCollection.NON_NULL_NON_NEWLINE_FILTER);
+		String val = reader.read(FilterCollection.NON_NULL_NON_NEWLINE_FILTER);
+		return getByKey(key, val);
 	}
 	
 	public static UsingToken getByKey(String key, String val) {

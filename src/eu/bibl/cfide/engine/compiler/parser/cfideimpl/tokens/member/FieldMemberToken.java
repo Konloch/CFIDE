@@ -1,9 +1,8 @@
 package eu.bibl.cfide.engine.compiler.parser.cfideimpl.tokens.member;
 
-import java.util.List;
-
 import eu.bibl.cfide.engine.compiler.parser.ParserException;
 import eu.bibl.cfide.engine.decompiler.FieldNodeDecompilationUnit;
+import eu.bibl.cfide.engine.util.StringArrayReader;
 
 public class FieldMemberToken extends MemberToken {
 	
@@ -59,16 +58,15 @@ public class FieldMemberToken extends MemberToken {
 		return sb.toString();
 	}
 	
-	public static FieldMemberToken create(List<String> tokens, int memberStartIndex) throws ParserException {
+	public static FieldMemberToken create(StringArrayReader reader) throws ParserException {
 		int access = 0;
 		String name = null;
 		String desc = null;
 		String value = null;
 		String valueType = null;
 		
-		int i;
-		for (i = memberStartIndex; i < tokens.size(); i++) {
-			String sToken = tokens.get(i);
+		while (reader.canReadNext()) {
+			String sToken = reader.read();
 			String uToken = sToken.toUpperCase();
 			if (ACCESS_VALUES.containsKey(uToken)) {
 				access |= ACCESS_VALUES.get(uToken);
@@ -76,14 +74,14 @@ public class FieldMemberToken extends MemberToken {
 				break;
 			} else {
 				desc = sToken;
-				name = tokens.get(++i);
+				name = reader.read();
 				
-				String nextToken = tokens.get(++i).toUpperCase();
+				String nextToken = reader.read().toUpperCase();
 				if (nextToken.equals(":END")) {
 					break;
 				} else if (nextToken.equals("=")) {
-					value = tokens.get(++i);
-					valueType = tokens.get(++i);
+					value = reader.read();
+					valueType = reader.read();
 				}
 				break;
 			}

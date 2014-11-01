@@ -26,7 +26,6 @@ import eu.bibl.banalysis.asm.ClassNode;
 import eu.bibl.banalysis.asm.desc.OpcodeInfo;
 import eu.bibl.cfide.engine.compiler.builder.BuilderException;
 import eu.bibl.cfide.engine.compiler.builder.IBuilder;
-import eu.bibl.cfide.engine.compiler.builder.cfideimpl.util.CodeArrayReader;
 import eu.bibl.cfide.engine.compiler.parser.ParserToken;
 import eu.bibl.cfide.engine.compiler.parser.cfideimpl.tokens.member.ClassMemberToken;
 import eu.bibl.cfide.engine.compiler.parser.cfideimpl.tokens.member.FieldMemberToken;
@@ -34,6 +33,7 @@ import eu.bibl.cfide.engine.compiler.parser.cfideimpl.tokens.member.MemberCloseT
 import eu.bibl.cfide.engine.compiler.parser.cfideimpl.tokens.member.MethodMemberToken;
 import eu.bibl.cfide.engine.compiler.parser.cfideimpl.tokens.using.UsingASMToken;
 import eu.bibl.cfide.engine.compiler.parser.cfideimpl.tokens.using.UsingVerToken;
+import eu.bibl.cfide.engine.util.StringArrayReader;
 
 public class BytecodeClassNodeBuilder implements IBuilder<ClassNode[], List<ParserToken>>, Opcodes {
 	
@@ -95,7 +95,7 @@ public class BytecodeClassNodeBuilder implements IBuilder<ClassNode[], List<Pars
 				ClassNode cn = (ClassNode) o;
 				MethodMemberToken mmt = (MethodMemberToken) token;
 				MethodNode mn = new MethodNode(mmt.getAccess(), mmt.getName(), mmt.getDesc(), null, mmt.getExceptionThrows());
-				mn.instructions.add(parseCode(new CodeArrayReader(mmt.getCode()), mn));
+				mn.instructions.add(parseCode(new StringArrayReader(mmt.getCode()), mn));
 				// System.out.println(mn.instructions.size() + " code");
 				// AdvancedInstructionPrinter.consolePrint(new AdvancedInstructionPrinter(mn).getLines());
 				cn.methods.add(mn);
@@ -110,7 +110,7 @@ public class BytecodeClassNodeBuilder implements IBuilder<ClassNode[], List<Pars
 	protected LabelHandler labelHandler = new LabelHandler();
 	
 	@SuppressWarnings("unchecked")
-	public InsnList parseCode(CodeArrayReader cr, MethodNode m) throws BuilderException {
+	public InsnList parseCode(StringArrayReader cr, MethodNode m) throws BuilderException {
 		labelHandler.reset();
 		InsnList list = new InsnList();
 		
@@ -146,7 +146,7 @@ public class BytecodeClassNodeBuilder implements IBuilder<ClassNode[], List<Pars
 		return list;
 	}
 	
-	protected AbstractInsnNode resolveInstruction(int opcode, CodeArrayReader cr) throws BuilderException {
+	protected AbstractInsnNode resolveInstruction(int opcode, StringArrayReader cr) throws BuilderException {
 		switch (opcode) {
 			case INVOKEDYNAMIC:
 			case INVOKEINTERFACE:
@@ -290,6 +290,13 @@ public class BytecodeClassNodeBuilder implements IBuilder<ClassNode[], List<Pars
 				} catch (NumberFormatException e) {
 					throw new BuilderException("Invalid integer value: " + value);
 				}
+			case "(java.lang.Double)":
+				try {
+					double d = Double.parseDouble(value);
+					return d;
+				} catch (NumberFormatException e) {
+					throw new BuilderException("Invalid double value: " + value);
+				}
 			case "(org.objectweb.asm.Type)":
 				return org.objectweb.asm.Type.getType(value);
 			default:
@@ -309,7 +316,7 @@ public class BytecodeClassNodeBuilder implements IBuilder<ClassNode[], List<Pars
 		}
 	}
 	
-	protected String expectCode(CodeArrayReader cr, String e1) throws BuilderException {
+	protected String expectCode(StringArrayReader cr, String e1) throws BuilderException {
 		try {
 			if (!cr.valid())
 				throw new BuilderException("Expected token but index was " + cr.index());

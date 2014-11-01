@@ -15,12 +15,14 @@ import java.util.Map;
 
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
+import javax.swing.JFileChooser;
 import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 import javax.swing.JPopupMenu;
 import javax.swing.JTree;
 import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
+import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeCellRenderer;
 import javax.swing.tree.TreePath;
@@ -92,13 +94,20 @@ public class ClassViewerTree extends JTree implements TreeSelectionListener, Mou
 				if (selectedNode instanceof ClassTreeNode) {
 					ClassTreeNode ctn = (ClassTreeNode) selectedNode;
 					try {
-						final ClassNode[] cns = compiler.compile(projectPanel.getText(ctn.getClassName()));
-						new Thread() {
-							@Override
-							public void run() {
-								new CompleteJarDumper(new ClassContainer(cns)).dump(new File("C:/Users/Bibl/Desktop/testjar1.jar"));
-							}
-						}.start();
+						JFileChooser fileChooser = new JFileChooser();
+						FileNameExtensionFilter filter = new FileNameExtensionFilter("Jar Files", "jar");
+						fileChooser.setFileFilter(filter);
+						int returnValue = fileChooser.showSaveDialog(ClassViewerTree.this);
+						if (returnValue == JFileChooser.APPROVE_OPTION) {
+							final File file = fileChooser.getSelectedFile();
+							final ClassNode[] cns = compiler.compile(projectPanel.getText(ctn.getClassName()));
+							new Thread() {
+								@Override
+								public void run() {
+									new CompleteJarDumper(new ClassContainer(cns)).dump(file);
+								}
+							}.start();
+						}
 					} catch (Exception e1) {
 						JOptionPane.showMessageDialog(ClassViewerTree.this, e1.getMessage(), "Compiler error", JOptionPane.ERROR_MESSAGE);
 						e1.printStackTrace();

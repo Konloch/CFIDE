@@ -11,19 +11,20 @@ import eu.bibl.cfide.engine.compiler.parser.cfideimpl.tokens.member.FieldMemberT
 import eu.bibl.cfide.engine.compiler.parser.cfideimpl.tokens.member.MemberCloseToken;
 import eu.bibl.cfide.engine.compiler.parser.cfideimpl.tokens.member.MethodMemberToken;
 import eu.bibl.cfide.engine.compiler.parser.cfideimpl.tokens.using.UsingToken;
+import eu.bibl.cfide.engine.util.StringArrayReader;
 
 public class BytecodeSourceParser extends BasicTokenParser {
 	
 	@Override
 	public List<ParserToken> parse(String text) throws ParserException {
-		List<String> lexedTokens = scanStringTokens(text);
+		StringArrayReader reader = new StringArrayReader(scanStringTokens(text));
 		List<ParserToken> tokens = new ArrayList<ParserToken>();
 		
 		int line = 1; // track line numbers
 		try {
-			for (int i = 0; i < lexedTokens.size(); i++) {
-				String sToken = lexedTokens.get(i);// s - string
-				String uToken = sToken.toUpperCase();// case insensitive
+			while (reader.canReadNext()) {
+				String sToken = reader.read();
+				String uToken = sToken.toUpperCase();
 				
 				if (sToken.equals("\n")) {
 					line++;
@@ -33,17 +34,25 @@ public class BytecodeSourceParser extends BasicTokenParser {
 				}
 				
 				if (uToken.equals("USING")) {
-					ParserToken token = UsingToken.create(lexedTokens, i);
+					int i = reader.index();
+					ParserToken token = UsingToken.create(reader);
 					tokens.add(token);
+					reader.set(i + 1);
 				} else if (uToken.equals("CLASS:")) {
-					ParserToken token = ClassMemberToken.create(lexedTokens, i);
+					int i = reader.index();
+					ParserToken token = ClassMemberToken.create(reader);
 					tokens.add(token);
+					reader.set(i + 1);
 				} else if (uToken.equals("FIELD:")) {
-					ParserToken token = FieldMemberToken.create(lexedTokens, i + 1);
+					int i = reader.index();
+					ParserToken token = FieldMemberToken.create(reader);
 					tokens.add(token);
+					reader.set(i + 1);
 				} else if (uToken.equals("METHOD:")) {
-					ParserToken token = MethodMemberToken.create(lexedTokens, i + 1);
+					int i = reader.index();
+					ParserToken token = MethodMemberToken.create(reader);
 					tokens.add(token);
+					reader.set(i + 1);
 				}
 			}
 		} catch (Exception e) {

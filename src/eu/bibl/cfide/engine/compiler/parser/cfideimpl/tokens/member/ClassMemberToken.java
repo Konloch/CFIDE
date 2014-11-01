@@ -6,6 +6,8 @@ import java.util.List;
 import eu.bibl.banalysis.filter.Filter;
 import eu.bibl.cfide.engine.compiler.parser.ParserException;
 import eu.bibl.cfide.engine.decompiler.ClassNodeDecompilationUnit;
+import eu.bibl.cfide.engine.util.FilterCollection;
+import eu.bibl.cfide.engine.util.StringArrayReader;
 
 public class ClassMemberToken extends MemberToken {
 	
@@ -71,34 +73,33 @@ public class ClassMemberToken extends MemberToken {
 	 * @param memberEndIndex Must be the index of the last '{' before called.
 	 * @return A ClassMemberToken configured correctly.
 	 */
-	public static ClassMemberToken create(List<String> tokens, int memberStartIndex) throws ParserException {
+	public static ClassMemberToken create(StringArrayReader reader) throws ParserException {
 		int access = 0;
 		List<String> interfaces = new ArrayList<String>();
 		String name = "";
 		String superName = "";
 		
-		int i;
-		mainFor: for (i = memberStartIndex; i < tokens.size(); i++) {
-			String sToken = tokens.get(i);
+		mainWhile: while (reader.canReadNext()) {
+			String sToken = reader.read(FilterCollection.NON_NULL_NON_NEWLINE_FILTER);
 			String uToken = sToken.toUpperCase();
 			if (ACCESS_VALUES.containsKey(uToken)) {
 				access |= ACCESS_VALUES.get(uToken);
 			} else if (CLASS_HEADER_MEMBERS.contains(uToken)) {
-				int index = findIndexNext(tokens, i, EXTENDS_IMPLEMENTS_FILTER);
-				String uTokenAtIndex = tokens.get(index).toUpperCase();
-				if (uTokenAtIndex.equals("EXTENDS")) {
-					name = tokens.get(index - 1);
-					superName = tokens.get(index + 1);
-					i = index + 1;
-				} else if (uTokenAtIndex.equals("IMPLEMENTS")) {
-					for (int j = index; j < tokens.size(); j++) {
-						String jToken = tokens.get(j);
+				if (uToken.equals("EXTENDS")) {
+					reader.markPos();
+					reader.move(-2);
+					name = reader.read(FilterCollection.NON_NULL_NON_NEWLINE_FILTER);
+					reader.resetPos();
+					superName = reader.read(FilterCollection.NON_NULL_NON_NEWLINE_FILTER);
+				} else if (uToken.equals("IMPLEMENTS")) {
+					while (reader.canReadNext()) {
+						String jToken = reader.read(FilterCollection.NON_NULL_NON_NEWLINE_FILTER);
 						if (jToken.equals("{")) {// pretty sure this will never happen
-							break mainFor;
+							break mainWhile;
 						}
 						interfaces.add(jToken);
 					}
-				} else if (uTokenAtIndex.equals("{")) {// pretty sure this will never happen
+				} else if (uToken.equals("{")) {// pretty sure this will never happen
 					break;
 				}
 			} else if (sToken.equals("{")) {
