@@ -29,8 +29,7 @@ public class MemberToken extends ParserToken {
 	
 	protected int access;
 	
-	public MemberToken(int id, int access) {
-		super(id);
+	public MemberToken(int access) {
 		this.access = access;
 	}
 	

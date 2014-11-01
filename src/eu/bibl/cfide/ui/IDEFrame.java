@@ -18,6 +18,8 @@ import java.awt.event.WindowEvent;
 import java.awt.event.WindowStateListener;
 import java.io.File;
 
+import javax.help.HelpSet;
+import javax.help.JHelp;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JMenu;
@@ -73,8 +75,9 @@ public class IDEFrame extends JFrame implements ActionListener, ComponentListene
 	
 	private void createJMenuBar() {
 		JMenuBar menuBar = new JMenuBar();
-		JMenu fileMenu = new JMenu("File");
 		
+		// file menu stuff =====================================
+		JMenu fileMenu = new JMenu("File");
 		JMenuItem openJarItem = new JMenuItem("Open Jar");
 		JMenuItem openProjItem = new JMenuItem("Open Proj");
 		JMenuItem exitMenuItem = new JMenuItem("Exit");
@@ -90,33 +93,74 @@ public class IDEFrame extends JFrame implements ActionListener, ComponentListene
 		fileMenu.add(openJarItem);
 		fileMenu.add(openProjItem);
 		fileMenu.add(exitMenuItem);
-		
 		menuBar.add(fileMenu);
+		// =====================================
+		
+		// help menu stuff =====================================
+		JMenu helpMenu = new JMenu("Help");
+		
+		JMenuItem helpMenuItem = new JMenuItem("Help");
+		JMenuItem aboutMenuItem = new JMenuItem("About");
+		
+		helpMenuItem.setActionCommand("help");
+		aboutMenuItem.setActionCommand("about");
+		
+		helpMenuItem.addActionListener(this);
+		aboutMenuItem.addActionListener(this);
+		
+		helpMenu.add(helpMenuItem);
+		helpMenu.add(aboutMenuItem);
+		
+		menuBar.add(helpMenu);
+		// =====================================
 		setJMenuBar(menuBar);
 	}
 	
 	@Override
 	public void actionPerformed(ActionEvent e) {
-		if (e.getActionCommand().equals("openJar")) {
-			JFileChooser chooser = new JFileChooser();
-			FileNameExtensionFilter filter = new FileNameExtensionFilter("Jar Files", "jar");
-			chooser.setFileFilter(filter);
-			int returnValue = chooser.showOpenDialog(this);
-			if (returnValue == JFileChooser.APPROVE_OPTION) {
-				File file = chooser.getSelectedFile();
-				idePanel.openJar(file.getAbsolutePath());
+		String cmd = e.getActionCommand();
+		switch (cmd) {
+			case "openJar": {
+				JFileChooser chooser = new JFileChooser();
+				FileNameExtensionFilter filter = new FileNameExtensionFilter("Jar Files", "jar");
+				chooser.setFileFilter(filter);
+				int returnValue = chooser.showOpenDialog(this);
+				if (returnValue == JFileChooser.APPROVE_OPTION) {
+					File file = chooser.getSelectedFile();
+					idePanel.openJar(file.getAbsolutePath());
+				}
+				break;
 			}
-		} else if (e.getActionCommand().equals("openProj")) {
-			JFileChooser chooser = new JFileChooser();
-			FileNameExtensionFilter filter = new FileNameExtensionFilter("CFIDE projects", "cfide");
-			chooser.setFileFilter(filter);
-			int returnValue = chooser.showOpenDialog(this);
-			if (returnValue == JFileChooser.APPROVE_OPTION) {
-				File file = chooser.getSelectedFile();
-				idePanel.openProj(file.getAbsolutePath());
+			case "openProj": {
+				JFileChooser chooser = new JFileChooser();
+				FileNameExtensionFilter filter = new FileNameExtensionFilter("CFIDE projects", "cfide");
+				chooser.setFileFilter(filter);
+				int returnValue = chooser.showOpenDialog(this);
+				if (returnValue == JFileChooser.APPROVE_OPTION) {
+					File file = chooser.getSelectedFile();
+					idePanel.openProj(file.getAbsolutePath());
+				}
+				break;
 			}
-		} else if (e.getActionCommand().equals("exit")) {
-			System.exit(1);
+			case "help":
+				HelpSet helpSet = new HelpSet();
+				helpSet.createHelpBroker("test");
+				JHelp jHelp = new JHelp(helpSet);
+				idePanel.addTab("Help", jHelp);
+				idePanel.setSelectedComponent(jHelp);
+				// JDialog dialog = new JDialog(this, "Help", true);
+				// dialog.add("Center", jHelp);
+				// dialog.setSize(new Dimension(400, 300));
+				// dialog.setLocationRelativeTo(IDEFrame.this);
+				// dialog.setVisible(true);
+				break;
+			case "about":
+				
+				break;
+			case "exit": {
+				System.exit(1);
+				break;
+			}
 		}
 	}
 	

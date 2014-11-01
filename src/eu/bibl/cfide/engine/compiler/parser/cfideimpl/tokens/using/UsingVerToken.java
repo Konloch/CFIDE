@@ -23,7 +23,7 @@ public class UsingVerToken extends UsingToken {
 	}
 	
 	UsingVerToken(String val) {
-		super(2, val);
+		super(val);
 	}
 	
 	public int getClassFileVersion() throws ParserException {

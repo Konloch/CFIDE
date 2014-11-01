@@ -87,8 +87,8 @@ public class ClassViewerTree extends JTree implements TreeSelectionListener, Mou
 				}
 			}
 		};
-		JMenuItem item = new JMenuItem("Save Class");
-		item.addActionListener(new ActionListener() {
+		JMenuItem saveClassItem = new JMenuItem("Save Class");
+		saveClassItem.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				if (selectedNode instanceof ClassTreeNode) {
@@ -115,7 +115,14 @@ public class ClassViewerTree extends JTree implements TreeSelectionListener, Mou
 				}
 			}
 		});
-		menu.add(item);
+		menu.add(saveClassItem);
+		JMenuItem saveJarItem = new JMenuItem("Save jar");
+		saveClassItem.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				
+			}
+		});
 		return menu;
 	}
 	

@@ -42,7 +42,7 @@ public class MethodNodeDecompilationUnit implements DecompilationUnit<MethodNode
 			sb.append(" {}\n");
 		} else {
 			sb.append(" {\n");
-			AdvancedInstructionPrinter insnPrinter = new AdvancedInstructionPrinter(m);
+			AdvancedInstructionPrinter insnPrinter = new AdvancedInstructionPrinter(config, m);
 			for (String insn : insnPrinter.createPrint()) {
 				sb.append("         ");
 				sb.append(insn);

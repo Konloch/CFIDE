@@ -20,6 +20,7 @@ public class CFIDEConfig {
 	public static final String DECOMPILER_CLASS_KEY = "decompiler.class";
 	public static final String DECOMPILER_FIELD_DECOMPILATION_UNIT_CLASS_KEY = "decompiler.fndu.class";
 	public static final String DECOMPILER_METHOD_DECOMPILATION_UNIT_CLASS_KEY = "decompiler.mndu.class";
+	public static final String DECOMPILER_METHOD_PRINT_LINE_NUMBERS = "decompiler.mndu.linenumbers";
 	
 	protected File file;
 	protected Map<String, Object> properties;

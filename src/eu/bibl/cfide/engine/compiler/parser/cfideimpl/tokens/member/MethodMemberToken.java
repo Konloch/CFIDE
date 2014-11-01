@@ -17,7 +17,7 @@ public class MethodMemberToken extends MemberToken {
 	protected String[] excThrows;
 	
 	public MethodMemberToken(int access, String name, String desc, String[] code, String[] excThrows) {
-		super(5, access);
+		super(access);
 		this.name = name;
 		this.desc = desc;
 		this.code = code;

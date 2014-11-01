@@ -5,7 +5,7 @@ import eu.bibl.cfide.engine.compiler.parser.ParserToken;
 public class MemberCloseToken extends ParserToken {
 	
 	public MemberCloseToken() {
-		super(6);
+		super();
 	}
 	
 	@Override

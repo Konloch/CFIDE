@@ -16,6 +16,7 @@ import org.objectweb.asm.tree.IntInsnNode;
 import org.objectweb.asm.tree.JumpInsnNode;
 import org.objectweb.asm.tree.LabelNode;
 import org.objectweb.asm.tree.LdcInsnNode;
+import org.objectweb.asm.tree.LineNumberNode;
 import org.objectweb.asm.tree.MethodInsnNode;
 import org.objectweb.asm.tree.MethodNode;
 import org.objectweb.asm.tree.TryCatchBlockNode;
@@ -140,10 +141,35 @@ public class BytecodeClassNodeBuilder implements IBuilder<ClassNode[], List<Pars
 				String exc = expectCode(cr, "exception type.");
 				TryCatchBlockNode tcbn = new TryCatchBlockNode(start, end, handler, exc);
 				m.tryCatchBlocks.add(tcbn);
+			} else if (s.startsWith("<") && s.endsWith(">")) {
+				AbstractInsnNode ain = parseCodeMetadata(m, s);
+				if (ain != null)
+					list.add(ain);
 			}
 		}
 		
 		return list;
+	}
+	
+	protected AbstractInsnNode parseCodeMetadata(MethodNode m, String meta) throws BuilderException {
+		meta = meta.substring(1);// get rid of <
+		meta = meta.substring(0, meta.length() - 1);// get rid of >
+		String[] split = meta.split(":", 2);
+		if (split.length != 2)
+			throw new BuilderException("Invalid meta data: " + meta + ".");
+		String key = split[0].toUpperCase();
+		switch (key) {
+			case "LINE": {
+				try {
+					int line = Integer.parseInt(split[1]);
+					return new LineNumberNode(line, labelHandler.getLastLabel());
+				} catch (NumberFormatException e) {
+					throw new BuilderException("Invalid line number: " + split[1] + ".");
+				}
+			}
+			default:
+				throw new BuilderException("Unknown metdata key: " + key + " (" + meta + ").");
+		}
 	}
 	
 	protected AbstractInsnNode resolveInstruction(int opcode, StringArrayReader cr) throws BuilderException {
@@ -294,6 +320,20 @@ public class BytecodeClassNodeBuilder implements IBuilder<ClassNode[], List<Pars
 				try {
 					double d = Double.parseDouble(value);
 					return d;
+				} catch (NumberFormatException e) {
+					throw new BuilderException("Invalid double value: " + value);
+				}
+			case "(java.lang.Long)":
+				try {
+					long l = Long.parseLong(value);
+					return l;
+				} catch (NumberFormatException e) {
+					throw new BuilderException("Invalid double value: " + value);
+				}
+			case "(java.lang.Float)":
+				try {
+					float f = Float.parseFloat(value);
+					return f;
 				} catch (NumberFormatException e) {
 					throw new BuilderException("Invalid double value: " + value);
 				}

@@ -1,29 +1,92 @@
 package eu.bibl.cfide.engine.decompiler;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.ListIterator;
 
+import org.objectweb.asm.tree.AbstractInsnNode;
 import org.objectweb.asm.tree.FieldInsnNode;
+import org.objectweb.asm.tree.FrameNode;
+import org.objectweb.asm.tree.IincInsnNode;
+import org.objectweb.asm.tree.InsnNode;
+import org.objectweb.asm.tree.IntInsnNode;
 import org.objectweb.asm.tree.JumpInsnNode;
 import org.objectweb.asm.tree.LabelNode;
 import org.objectweb.asm.tree.LdcInsnNode;
+import org.objectweb.asm.tree.LineNumberNode;
 import org.objectweb.asm.tree.LookupSwitchInsnNode;
 import org.objectweb.asm.tree.MethodInsnNode;
 import org.objectweb.asm.tree.MethodNode;
 import org.objectweb.asm.tree.TableSwitchInsnNode;
+import org.objectweb.asm.tree.TypeInsnNode;
+import org.objectweb.asm.tree.VarInsnNode;
 
-import eu.bibl.banalysis.asm.insn.InstructionPattern;
 import eu.bibl.banalysis.asm.insn.InstructionPrinter;
+import eu.bibl.cfide.config.CFIDEConfig;
 
 public class AdvancedInstructionPrinter extends InstructionPrinter {
 	
-	public AdvancedInstructionPrinter(MethodNode m) {
+	protected CFIDEConfig config;
+	
+	public AdvancedInstructionPrinter(CFIDEConfig config, MethodNode m) {
 		super(m);
+		this.config = config;
 	}
 	
-	public AdvancedInstructionPrinter(MethodNode m, InstructionPattern p) {
-		super(m, p);
-		
+	@Override
+	public ArrayList<String> createPrint() {
+		ArrayList<String> info = new ArrayList<String>();
+		ListIterator<?> it = mNode.instructions.iterator();
+		while (it.hasNext()) {
+			AbstractInsnNode ain = (AbstractInsnNode) it.next();
+			String line = "";
+			if (ain instanceof VarInsnNode) {
+				line = printVarInsnNode((VarInsnNode) ain, it);
+			} else if (ain instanceof IntInsnNode) {
+				line = printIntInsnNode((IntInsnNode) ain, it);
+			} else if (ain instanceof FieldInsnNode) {
+				line = printFieldInsnNode((FieldInsnNode) ain, it);
+			} else if (ain instanceof MethodInsnNode) {
+				line = printMethodInsnNode((MethodInsnNode) ain, it);
+			} else if (ain instanceof LdcInsnNode) {
+				line = printLdcInsnNode((LdcInsnNode) ain, it);
+			} else if (ain instanceof InsnNode) {
+				line = printInsnNode((InsnNode) ain, it);
+			} else if (ain instanceof JumpInsnNode) {
+				line = printJumpInsnNode((JumpInsnNode) ain, it);
+			} else if (ain instanceof LineNumberNode) {
+				line = printLineNumberNode((LineNumberNode) ain, it);
+			} else if (ain instanceof LabelNode) {
+				line = printLabelnode((LabelNode) ain);
+			} else if (ain instanceof TypeInsnNode) {
+				line = printTypeInsnNode((TypeInsnNode) ain);
+			} else if (ain instanceof FrameNode) {
+				line = "";
+			} else if (ain instanceof IincInsnNode) {
+				line = printIincInsnNode((IincInsnNode) ain);
+			} else if (ain instanceof TableSwitchInsnNode) {
+				line = printTableSwitchInsnNode((TableSwitchInsnNode) ain);
+			} else if (ain instanceof LookupSwitchInsnNode) {
+				line = printLookupSwitchInsnNode((LookupSwitchInsnNode) ain);
+			} else {
+				line += "UNKNOWN-NODE: " + nameOpcode(ain.getOpcode()) + " " + ain.toString();
+			}
+			if (!line.equals("")) {
+				// if (match) dont use match because -> is used otherwhere
+				// if (matchedInsns.contains(ain))
+				// line = "   -> " + line;
+				info.add(line);
+			}
+		}
+		return info;
+	}
+	
+	@Override
+	protected String printLineNumberNode(LineNumberNode lin, ListIterator<?> it) {
+		if (config.getProperty(CFIDEConfig.DECOMPILER_METHOD_PRINT_LINE_NUMBERS, true)) {
+			return "    <line:" + lin.line + ">";
+		}
+		return "";
 	}
 	
 	@Override

@@ -142,13 +142,15 @@ public class BytecodeSourceParser extends BasicTokenParser {
 	protected String getNextStringToken(char[] chars, int start) {
 		StringBuilder sb = new StringBuilder();
 		int len = chars.length;
-		boolean locked = false;
+		int locked = 0;
 		
 		while (start < len) {
 			char c = chars[start++];
-			if (!locked) {
+			if (locked == 0) {// 0 = not locked, 1 = string, 2 = <>
 				if (c == '"') {
-					locked = true;
+					locked = 1;
+				} else if (c == '<') {
+					locked = 2;
 				} else {
 					if (Character.isWhitespace(c) && (c != '\n')) {
 						break;
@@ -157,9 +159,13 @@ public class BytecodeSourceParser extends BasicTokenParser {
 						break;
 					}
 				}
-			} else {// in a string "" block, don't break loop on '\n'
+			} else if (locked == 1) {// in a string "" block, don't break loop on '\n'
 				if ((c == '"') && (chars[start - 2] != '\\')) { // check for unescapped " and -2 because of the ++ before
-					locked = false;
+					locked = 0;
+				}
+			} else if (locked == 2) {
+				if (c == '>') {
+					locked = 0;
 				}
 			}
 			

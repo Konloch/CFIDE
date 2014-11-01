@@ -9,8 +9,7 @@ public abstract class UsingToken extends ParserToken {
 	
 	protected String val;
 	
-	UsingToken(int id, String val) {
-		super(id);
+	UsingToken(String val) {
 		this.val = val;
 	}
 	

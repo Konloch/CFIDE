@@ -16,7 +16,7 @@ public class ClassMemberToken extends MemberToken {
 	protected String[] interfaces;
 	
 	public ClassMemberToken(int access, String name, String superName, String[] interfaces) {
-		super(3, access);
+		super(access);
 		this.name = name;
 		this.superName = superName;
 		this.interfaces = interfaces;

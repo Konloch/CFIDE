@@ -26,9 +26,15 @@ public class LabelHandler {
 		return s;
 	}
 	
+	protected LabelNode lastLabel;
+	
+	public LabelNode getLastLabel() {
+		return lastLabel;
+	}
+	
 	public LabelNode retreiveLabel(String s) {
 		s = formatLabel(s);
-		return labels.get(s);
+		return lastLabel = labels.get(s);
 	}
 	
 	public void reset() {

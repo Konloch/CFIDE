@@ -7,7 +7,7 @@ import eu.bibl.cfide.engine.compiler.parser.ParserException;
 public class UsingASMToken extends UsingToken {
 	
 	UsingASMToken(String val) {
-		super(1, val);
+		super(val);
 	}
 	
 	public int getASMValue() throws ParserException {

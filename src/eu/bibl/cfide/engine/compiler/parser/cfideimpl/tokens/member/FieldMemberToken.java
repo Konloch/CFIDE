@@ -12,13 +12,13 @@ public class FieldMemberToken extends MemberToken {
 	protected String valueType;
 	
 	public FieldMemberToken(int access, String name, String desc) {
-		super(4, access);
+		super(access);
 		this.name = name;
 		this.desc = desc;
 	}
 	
 	public FieldMemberToken(int access, String name, String desc, String value, String valueType) {
-		super(4, access);
+		super(access);
 		this.name = name;
 		this.desc = desc;
 		this.value = value;
