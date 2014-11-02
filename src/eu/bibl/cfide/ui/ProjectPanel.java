@@ -128,6 +128,10 @@ public class ProjectPanel extends JPanel implements MouseListener, ActionListene
 		return ett.getTextArea().getText();
 	}
 	
+	public JarDownloader getJarDownloader() {
+		return dl;
+	}
+	
 	protected JPopupMenu popupMenu;
 	
 	protected void createPopupMenu() {

@@ -109,13 +109,14 @@ public class MethodMemberToken extends MemberToken {
 							throwsList.add(excThrow);
 						}
 					} else if (uThrowsToken.equals("METHOD:")) {
-						reader.move(1);
+						reader.move(2);// pass "method:"
 						while (reader.canReadNext()) {
 							String s = reader.read(FilterCollection.NON_NULL_NON_NEWLINE_FILTER);
-							if (!ACCESS_VALUES.containsKey(s))
+							if (!ACCESS_VALUES.containsKey(s.toUpperCase())) {
 								break;
+							}
 						}
-						reader.move(1);
+						reader.move(-1);
 						name = reader.read(FilterCollection.NON_NULL_NON_NEWLINE_FILTER);
 						desc = reader.read(FilterCollection.NON_NULL_NON_NEWLINE_FILTER);
 					}

@@ -123,14 +123,22 @@ public class BytecodeClassNodeBuilder implements IBuilder<ClassNode[], List<Pars
 			}
 		}
 		
+		// int highestVar = 0;
 		cr.reset();
 		while (cr.canReadNext()) {
 			String s = cr.read();
 			int val = isOpcode(s);
 			if (val != -1) {
 				AbstractInsnNode ain = resolveInstruction(val, cr);
-				if (ain != null)
+				if (ain != null) {
+					// if (ain instanceof VarInsnNode) {
+					// VarInsnNode vin = (VarInsnNode) ain;
+					// int v = vin.var;
+					// if (v > highestVar)
+					// highestVar = v;
+					// }
 					list.add(ain);
+				}
 			} else if (s.endsWith(":") && !s.toUpperCase().equals("TRYCATCH:")) {// its a label
 				LabelNode ln = labelHandler.retreiveLabel(s);
 				list.add(ln);
@@ -147,6 +155,7 @@ public class BytecodeClassNodeBuilder implements IBuilder<ClassNode[], List<Pars
 					list.add(ain);
 			}
 		}
+		// m.maxLocals = highestVar;
 		
 		return list;
 	}

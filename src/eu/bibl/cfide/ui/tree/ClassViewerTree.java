@@ -6,12 +6,15 @@ import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.jar.JarEntry;
+import java.util.jar.JarOutputStream;
 
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
@@ -27,8 +30,11 @@ import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeCellRenderer;
 import javax.swing.tree.TreePath;
 
+import org.objectweb.asm.ClassWriter;
+
 import eu.bibl.banalysis.asm.ClassNode;
 import eu.bibl.banalysis.storage.classes.ClassContainer;
+import eu.bibl.bio.jfile.classloader.JarClassLoader;
 import eu.bibl.bio.jfile.out.CompleteJarDumper;
 import eu.bibl.cfide.config.CFIDEConfig;
 import eu.bibl.cfide.engine.compiler.BasicSourceCompiler;
@@ -104,7 +110,48 @@ public class ClassViewerTree extends JTree implements TreeSelectionListener, Mou
 							new Thread() {
 								@Override
 								public void run() {
-									new CompleteJarDumper(new ClassContainer(cns)).dump(file);
+									ClassContainer cc = new ClassContainer(cns);
+									ClassContainer mix = new ClassContainer(contents.getNodes().values());
+									mix.add(cc);
+									final JarClassLoader jcl = projectPanel.getJarDownloader().getClassLoader();
+									new CompleteJarDumper(mix) {
+										@Override
+										public int dumpClass(JarOutputStream out, String name, org.objectweb.asm.tree.ClassNode cn) throws IOException {
+											JarEntry entry = new JarEntry(cn.name + ".class");
+											out.putNextEntry(entry);
+											ClassWriter writer = new ClassWriter(ClassWriter.COMPUTE_MAXS) {
+												@SuppressWarnings("unchecked")
+												// @Override
+												protected String getCommonSuperClass1(String paramString1, String paramString2) {
+													Class localClass1;
+													Class localClass2;
+													try {
+														localClass1 = jcl.loadClass(paramString1.replace('/', '.'));
+														localClass2 = jcl.loadClass(paramString2.replace('/', '.'));
+													} catch (Exception localException) {
+														throw new RuntimeException(localException.toString());
+													}
+													if (localClass1.isAssignableFrom(localClass2)) {
+														return paramString1;
+													}
+													if (localClass2.isAssignableFrom(localClass1)) {
+														return paramString2;
+													}
+													if ((localClass1.isInterface()) || (localClass2.isInterface())) {
+														return "java/lang/Object";
+													}
+													do {
+														localClass1 = localClass1.getSuperclass();
+													} while (!localClass1.isAssignableFrom(localClass2));
+													return localClass1.getName().replace('.', '/');
+												}
+											};
+											cn.accept(writer);
+											out.write(writer.toByteArray());
+											return 1;
+										}
+										
+									}.dump(file);
 								}
 							}.start();
 						}
