@@ -6,15 +6,12 @@ import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.io.File;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.jar.JarEntry;
-import java.util.jar.JarOutputStream;
 
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
@@ -30,16 +27,14 @@ import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeCellRenderer;
 import javax.swing.tree.TreePath;
 
-import org.objectweb.asm.ClassWriter;
-
 import eu.bibl.banalysis.asm.ClassNode;
 import eu.bibl.banalysis.storage.classes.ClassContainer;
 import eu.bibl.bio.jfile.classloader.JarClassLoader;
-import eu.bibl.bio.jfile.out.CompleteJarDumper;
 import eu.bibl.cfide.config.CFIDEConfig;
 import eu.bibl.cfide.engine.compiler.BasicSourceCompiler;
 import eu.bibl.cfide.engine.decompiler.DecompilationUnit;
 import eu.bibl.cfide.engine.decompiler.PrefixedStringBuilder;
+import eu.bibl.cfide.engine.launch.dump.CustomJarDumper;
 import eu.bibl.cfide.ui.ProjectPanel;
 import eu.bibl.cfide.ui.editor.EditorTabbedPane;
 import eu.bibl.cfide.ui.editor.EditorTextTab;
@@ -114,44 +109,7 @@ public class ClassViewerTree extends JTree implements TreeSelectionListener, Mou
 									ClassContainer mix = new ClassContainer(contents.getNodes().values());
 									mix.add(cc);
 									final JarClassLoader jcl = projectPanel.getJarDownloader().getClassLoader();
-									new CompleteJarDumper(mix) {
-										@Override
-										public int dumpClass(JarOutputStream out, String name, org.objectweb.asm.tree.ClassNode cn) throws IOException {
-											JarEntry entry = new JarEntry(cn.name + ".class");
-											out.putNextEntry(entry);
-											ClassWriter writer = new ClassWriter(ClassWriter.COMPUTE_MAXS) {
-												@SuppressWarnings("unchecked")
-												// @Override
-												protected String getCommonSuperClass1(String paramString1, String paramString2) {
-													Class localClass1;
-													Class localClass2;
-													try {
-														localClass1 = jcl.loadClass(paramString1.replace('/', '.'));
-														localClass2 = jcl.loadClass(paramString2.replace('/', '.'));
-													} catch (Exception localException) {
-														throw new RuntimeException(localException.toString());
-													}
-													if (localClass1.isAssignableFrom(localClass2)) {
-														return paramString1;
-													}
-													if (localClass2.isAssignableFrom(localClass1)) {
-														return paramString2;
-													}
-													if ((localClass1.isInterface()) || (localClass2.isInterface())) {
-														return "java/lang/Object";
-													}
-													do {
-														localClass1 = localClass1.getSuperclass();
-													} while (!localClass1.isAssignableFrom(localClass2));
-													return localClass1.getName().replace('.', '/');
-												}
-											};
-											cn.accept(writer);
-											out.write(writer.toByteArray());
-											return 1;
-										}
-										
-									}.dump(file);
+									new CustomJarDumper(mix, jcl).dump(file);
 								}
 							}.start();
 						}
@@ -215,7 +173,7 @@ public class ClassViewerTree extends JTree implements TreeSelectionListener, Mou
 		Collections.sort(packageKeys, new Comparator<PackageTreeNode>() {
 			@Override
 			public int compare(PackageTreeNode o1, PackageTreeNode o2) {
-				return o1.getPackageName().compareTo(o2.getPackageName());
+				return o1.getPackageName().compareToIgnoreCase(o2.getPackageName());
 			}
 		});
 		
@@ -229,7 +187,7 @@ public class ClassViewerTree extends JTree implements TreeSelectionListener, Mou
 		Collections.sort(classKeys, new Comparator<ClassTreeNode>() {
 			@Override
 			public int compare(ClassTreeNode o1, ClassTreeNode o2) {
-				return o1.getClassName().compareTo(o2.getClassName());
+				return o1.getClassName().compareToIgnoreCase(o2.getClassName());
 			}
 		});
 		
@@ -261,7 +219,7 @@ public class ClassViewerTree extends JTree implements TreeSelectionListener, Mou
 			etp.setSelectedComponent(textTab);
 			return;
 		}
-		textTab = etp.createTextTab(simpleName);
+		textTab = etp.createTextTab(simpleName, projectPanel);
 		etp.setSelectedComponent(textTab);
 		PrefixedStringBuilder sb = engine.decompile(new PrefixedStringBuilder(), cn);
 		textTab.setText(sb.toString());

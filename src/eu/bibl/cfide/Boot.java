@@ -1,5 +1,7 @@
 package eu.bibl.cfide;
 
+import java.io.IOException;
+
 import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
 
@@ -8,7 +10,7 @@ import eu.bibl.cfide.ui.UISettings;
 
 public class Boot {
 	
-	public static void main(String[] args) {
+	public static void main(String[] args) throws IOException {
 		try {
 			UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
 			UIManager.put("Tree.closedIcon", UISettings.PACKAGE_ICON);
@@ -23,5 +25,9 @@ public class Boot {
 				new IDEFrame();
 			}
 		});
+	}
+	
+	public void d() {
+		System.out.println("yolo");
 	}
 }

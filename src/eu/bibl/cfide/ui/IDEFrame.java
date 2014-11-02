@@ -30,11 +30,13 @@ import javax.swing.filechooser.FileNameExtensionFilter;
 public class IDEFrame extends JFrame implements ActionListener, ComponentListener, WindowStateListener {
 	
 	private static final long serialVersionUID = 6900788093562837072L;
+	private static IDEFrame instance;
 	
 	private IDETabbedPane idePanel;
 	
 	public IDEFrame() {
 		super("CFIDE - #Bibl");
+		instance = this;
 		setDefaultCloseOperation(EXIT_ON_CLOSE);
 		
 		double sizeX = GLOBAL_CONFIG.getProperty(FRAME_WIDTH_KEY, 800D);
@@ -198,5 +200,9 @@ public class IDEFrame extends JFrame implements ActionListener, ComponentListene
 	
 	@Override
 	public void componentHidden(ComponentEvent e) {
+	}
+	
+	public static IDEFrame getInstance() {
+		return instance;
 	}
 }
