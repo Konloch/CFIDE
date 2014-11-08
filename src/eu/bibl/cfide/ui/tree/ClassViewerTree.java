@@ -29,12 +29,11 @@ import javax.swing.tree.TreePath;
 
 import eu.bibl.banalysis.asm.ClassNode;
 import eu.bibl.banalysis.storage.classes.ClassContainer;
-import eu.bibl.bio.jfile.classloader.JarClassLoader;
+import eu.bibl.bio.jfile.out.CompleteJarDumper;
 import eu.bibl.cfide.config.CFIDEConfig;
 import eu.bibl.cfide.engine.compiler.BasicSourceCompiler;
 import eu.bibl.cfide.engine.decompiler.DecompilationUnit;
 import eu.bibl.cfide.engine.decompiler.PrefixedStringBuilder;
-import eu.bibl.cfide.engine.launch.dump.CustomJarDumper;
 import eu.bibl.cfide.ui.ProjectPanel;
 import eu.bibl.cfide.ui.editor.EditorTabbedPane;
 import eu.bibl.cfide.ui.editor.EditorTextTab;
@@ -81,7 +80,6 @@ public class ClassViewerTree extends JTree implements TreeSelectionListener, Mou
 						TreePath path = new TreePath(selectedNode);
 						ClassViewerTree.this.expandPath(path);// want to highlight the jtree leaf but that wont work,
 						ClassViewerTree.this.setSelectionPath(path);// instead just to fire the open event to make sure the class is decompiled.
-						
 					}
 				} else {
 					super.setVisible(false);
@@ -106,10 +104,7 @@ public class ClassViewerTree extends JTree implements TreeSelectionListener, Mou
 								@Override
 								public void run() {
 									ClassContainer cc = new ClassContainer(cns);
-									ClassContainer mix = new ClassContainer(contents.getNodes().values());
-									mix.add(cc);
-									final JarClassLoader jcl = projectPanel.getJarDownloader().getClassLoader();
-									new CustomJarDumper(mix, jcl).dump(file);
+									new CompleteJarDumper(cc).dump(file);
 								}
 							}.start();
 						}
@@ -121,13 +116,6 @@ public class ClassViewerTree extends JTree implements TreeSelectionListener, Mou
 			}
 		});
 		menu.add(saveClassItem);
-		JMenuItem saveJarItem = new JMenuItem("Save jar");
-		saveClassItem.addActionListener(new ActionListener() {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				
-			}
-		});
 		return menu;
 	}
 	
@@ -197,6 +185,60 @@ public class ClassViewerTree extends JTree implements TreeSelectionListener, Mou
 		}
 	}
 	
+	// public void saveExpansionState() {
+	// Enumeration<TreePath> e = getExpandedDescendants(new TreePath(getModel().getRoot()));
+	// while (e.hasMoreElements()) {
+	// TreePath tp = e.nextElement();
+	// System.out.println("open: " + tp.toString());
+	// }
+	// }
+	//
+	// public void loadExpansionState(TreePath[] paths) {
+	// if (paths == null)
+	// return;
+	// for (TreePath path : paths) {
+	// expandPath(path);
+	// }
+	// }
+	
+	// public static boolean isDescendant(TreePath path1, TreePath path2) {
+	// int count1 = path1.getPathCount();
+	// int count2 = path2.getPathCount();
+	// if (count1 <= count2)
+	// return false;
+	// while (count1 != count2) {
+	// path1 = path1.getParentPath();
+	// count1--;
+	// }
+	// return path1.equals(path2);
+	// }
+	//
+	// public String getExpansionState(int row) {
+	// TreePath rowPath = getPathForRow(row);
+	// StringBuffer sb = new StringBuffer();
+	// int rowCount = getRowCount();
+	// for (int i = row; i < rowCount; i++) {
+	// TreePath path = getPathForRow(i);
+	// if ((i == row) || isDescendant(path, rowPath)) {
+	// if (isExpanded(path)) {
+	// sb.append(i - row);
+	// sb.append(",");
+	// }
+	// } else {
+	// break;
+	// }
+	// }
+	// return sb.toString();
+	// }
+	//
+	// public void restoreExpanstionState(int row, String expansionState) {
+	// String[] tokens = expansionState.split(",");
+	// for (String s : tokens) {
+	// int token = row + Integer.parseInt(s);
+	// expandRow(token);
+	// }
+	// }
+	
 	@Override
 	public void valueChanged(TreeSelectionEvent e) {
 		DefaultMutableTreeNode node = (DefaultMutableTreeNode) getLastSelectedPathComponent();
@@ -209,17 +251,18 @@ public class ClassViewerTree extends JTree implements TreeSelectionListener, Mou
 	}
 	
 	protected void decompile(ClassNode cn) {
-		String simpleName = ClassTreeNode.getClassName(cn.name);
-		EditorTextTab textTab = etp.getTextTab(simpleName);
+		// String simpleName = ClassTreeNode.getClassName(cn.name);
+		// ISSUE #1: https://github.com/TheBiblMan/CFIDE/issues/1
+		EditorTextTab textTab = etp.getTextTab(cn.name);
 		if (textTab != null) {
 			if (!textTab.isShowing()) {
-				etp.addTab(simpleName, textTab);
+				etp.addTab(cn.name, textTab);
 				textTab.setupFinal();
 			}
 			etp.setSelectedComponent(textTab);
 			return;
 		}
-		textTab = etp.createTextTab(simpleName, projectPanel);
+		textTab = etp.createTextTab(cn.name, projectPanel);
 		etp.setSelectedComponent(textTab);
 		PrefixedStringBuilder sb = engine.decompile(new PrefixedStringBuilder(), cn);
 		textTab.setText(sb.toString());

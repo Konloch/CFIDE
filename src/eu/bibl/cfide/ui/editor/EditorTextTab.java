@@ -198,7 +198,8 @@ public class EditorTextTab extends RTextScrollPane implements MouseListener, Act
 	}
 	
 	public void setupFinal() {// called from EditorTabbedPane.createTextTab
-		index = tabbedPane.indexOfTab(title);
+		// ISSUE #1: https://github.com/TheBiblMan/CFIDE/issues/1
+		index = tabbedPane.getTabCount() - 1;
 		tabbedPane.setTabComponentAt(index, tabNamePanel);
 	}
 	

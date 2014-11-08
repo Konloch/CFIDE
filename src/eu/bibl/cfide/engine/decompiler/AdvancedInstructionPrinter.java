@@ -17,6 +17,7 @@ import org.objectweb.asm.tree.LineNumberNode;
 import org.objectweb.asm.tree.LookupSwitchInsnNode;
 import org.objectweb.asm.tree.MethodInsnNode;
 import org.objectweb.asm.tree.MethodNode;
+import org.objectweb.asm.tree.MultiANewArrayInsnNode;
 import org.objectweb.asm.tree.TableSwitchInsnNode;
 import org.objectweb.asm.tree.TypeInsnNode;
 import org.objectweb.asm.tree.VarInsnNode;
@@ -68,6 +69,8 @@ public class AdvancedInstructionPrinter extends InstructionPrinter {
 				line = printTableSwitchInsnNode((TableSwitchInsnNode) ain);
 			} else if (ain instanceof LookupSwitchInsnNode) {
 				line = printLookupSwitchInsnNode((LookupSwitchInsnNode) ain);
+			} else if (ain instanceof MultiANewArrayInsnNode) {// HOLY FUCKING SHIT THIS WASNT IMPLEMENTED
+				line = printMultiANewArrayInsnNode((MultiANewArrayInsnNode) ain, it);
 			} else {
 				line += "UNKNOWN-NODE: " + nameOpcode(ain.getOpcode()) + " " + ain.toString();
 			}
@@ -79,6 +82,10 @@ public class AdvancedInstructionPrinter extends InstructionPrinter {
 			}
 		}
 		return info;
+	}
+	
+	protected String printMultiANewArrayInsnNode(MultiANewArrayInsnNode ain, ListIterator<?> it) {
+		return nameOpcode(ain.getOpcode()) + " " + ain.desc + " " + ain.dims;
 	}
 	
 	@Override

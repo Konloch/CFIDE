@@ -1,9 +1,12 @@
 package eu.bibl.cfide.engine.decompiler;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import org.objectweb.asm.Opcodes;
+import org.objectweb.asm.tree.AnnotationNode;
+import org.objectweb.asm.tree.LocalVariableNode;
 import org.objectweb.asm.tree.MethodNode;
 import org.objectweb.asm.tree.TryCatchBlockNode;
 
@@ -42,8 +45,30 @@ public class MethodNodeDecompilationUnit implements DecompilationUnit<MethodNode
 			sb.append(" {}\n");
 		} else {
 			sb.append(" {\n");
+			
+			if (m.annotationDefault != null) {
+				sb.append(m.annotationDefault);
+				sb.append("\n");
+			}
+			
+			if (m.signature != null) {
+				sb.append(m.signature);
+				sb.append("\n");
+			}
+			
 			AdvancedInstructionPrinter insnPrinter = new AdvancedInstructionPrinter(config, m);
-			for (String insn : insnPrinter.createPrint()) {
+			List<String> print = insnPrinter.createPrint();
+			
+			addAttrList(m.attrs, "attr", sb, insnPrinter);
+			addAttrList(m.invisibleAnnotations, "invisAnno", sb, insnPrinter);
+			addAttrList(m.invisibleAnnotations, "invisLocalVarAnno", sb, insnPrinter);
+			addAttrList(m.invisibleTypeAnnotations, "invisTypeAnno", sb, insnPrinter);
+			addAttrList(m.localVariables, "localVar", sb, insnPrinter);
+			addAttrList(m.visibleAnnotations, "visibAnno", sb, insnPrinter);
+			addAttrList(m.visibleLocalVariableAnnotations, "visLocalVarAnno", sb, insnPrinter);
+			addAttrList(m.visibleTypeAnnotations, "visTypeAnno", sb, insnPrinter);
+			
+			for (String insn : print) {
 				sb.append("         ");
 				sb.append(insn);
 				sb.append("\n");
@@ -51,7 +76,7 @@ public class MethodNodeDecompilationUnit implements DecompilationUnit<MethodNode
 			for (Object o : m.tryCatchBlocks) {
 				TryCatchBlockNode tcbn = (TryCatchBlockNode) o;
 				sb.append("         ");
-				sb.append("TryCatch: L");
+				sb.append("<TryCatch: L");
 				sb.append(insnPrinter.resolveLabel(tcbn.start));
 				sb.append(" L");
 				sb.append(insnPrinter.resolveLabel(tcbn.end));
@@ -59,8 +84,9 @@ public class MethodNodeDecompilationUnit implements DecompilationUnit<MethodNode
 				sb.append(insnPrinter.resolveLabel(tcbn.handler));
 				sb.append(" ");
 				sb.append(tcbn.type);
-				sb.append("\n");
+				sb.append(">\n");
 			}
+			
 			sb.append("     } //end of ");
 			sb.append(m.name);
 			sb.append(" ");
@@ -68,6 +94,44 @@ public class MethodNodeDecompilationUnit implements DecompilationUnit<MethodNode
 			sb.append("\n");
 		}
 		return sb;
+	}
+	
+	private void addAttrList(List<?> list, String name, PrefixedStringBuilder sb, AdvancedInstructionPrinter insnPrinter) {
+		if (list == null)
+			return;
+		if (list.size() > 0) {
+			for (Object o : list) {
+				sb.append("         <");
+				sb.append(name);
+				sb.append(":");
+				sb.append(printAttr(o, insnPrinter));
+				sb.append(">");
+				sb.append("\n");
+			}
+			sb.append("\n");
+		}
+	}
+	
+	private String printAttr(Object o, AdvancedInstructionPrinter insnPrinter) {
+		if (o instanceof LocalVariableNode) {
+			LocalVariableNode lvn = (LocalVariableNode) o;
+			return "index=" + lvn.index + " , name=" + lvn.name + " , desc=" + lvn.desc + ", sig=" + lvn.signature + ", start=L" + insnPrinter.resolveLabel(lvn.start) + ", end=L" + insnPrinter.resolveLabel(lvn.end);
+		} else if (o instanceof AnnotationNode) {
+			AnnotationNode an = (AnnotationNode) o;
+			StringBuilder sb = new StringBuilder();
+			sb.append("desc = ");
+			sb.append(an.desc);
+			sb.append(" , values = ");
+			if (an.values != null) {
+				sb.append(Arrays.toString(an.values.toArray()));
+			} else {
+				sb.append("[]");
+			}
+			return sb.toString();
+		}
+		if (o == null)
+			return "";
+		return o.toString();
 	}
 	
 	public static String getAccessString(int access) {

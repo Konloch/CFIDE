@@ -142,24 +142,28 @@ public class BytecodeClassNodeBuilder implements IBuilder<ClassNode[], List<Pars
 			} else if (s.endsWith(":") && !s.toUpperCase().equals("TRYCATCH:")) {// its a label
 				LabelNode ln = labelHandler.retreiveLabel(s);
 				list.add(ln);
-			} else if (s.endsWith(":") && s.toUpperCase().equals("TRYCATCH:")) {// its a label
-				LabelNode start = labelHandler.retreiveLabel(expectCode(cr, "trycatchblocknode start label."));
-				LabelNode end = labelHandler.retreiveLabel(expectCode(cr, "trycatchblocknode start label."));
-				LabelNode handler = labelHandler.retreiveLabel(expectCode(cr, "trycatchblocknode start label."));
-				String exc = expectCode(cr, "exception type.");
-				TryCatchBlockNode tcbn = new TryCatchBlockNode(start, end, handler, exc);
-				m.tryCatchBlocks.add(tcbn);
-			} else if (s.startsWith("<") && s.endsWith(">")) {
+			} else /*
+			 * if (s.endsWith(":") && s.toUpperCase().equals("TRYCATCH:")) {
+			 * LabelNode start = labelHandler.retreiveLabel(expectCode(cr, "trycatchblocknode start label."));
+			 * LabelNode end = labelHandler.retreiveLabel(expectCode(cr, "trycatchblocknode start label."));
+			 * LabelNode handler = labelHandler.retreiveLabel(expectCode(cr, "trycatchblocknode start label."));
+			 * String exc = expectCode(cr, "exception type.");
+			 * TryCatchBlockNode tcbn = new TryCatchBlockNode(start, end, handler, exc);
+			 * m.tryCatchBlocks.add(tcbn);
+			 * } else
+			 */
+				if (s.startsWith("<") && s.endsWith(">")) {
 				AbstractInsnNode ain = parseCodeMetadata(m, s);
 				if (ain != null)
 					list.add(ain);
-			}
+				}
 		}
 		// m.maxLocals = highestVar;
 		
 		return list;
 	}
 	
+	@SuppressWarnings("unchecked")
 	protected AbstractInsnNode parseCodeMetadata(MethodNode m, String meta) throws BuilderException {
 		meta = meta.substring(1);// get rid of <
 		meta = meta.substring(0, meta.length() - 1);// get rid of >
@@ -176,8 +180,24 @@ public class BytecodeClassNodeBuilder implements IBuilder<ClassNode[], List<Pars
 					throw new BuilderException("Invalid line number: " + split[1] + ".");
 				}
 			}
+			case "TRYCATCH": {
+				String[] parts = split[1].trim().split(" ");
+				if (parts.length != 4)
+					throw new BuilderException("Invalid trycatch: " + split[1].trim());
+				LabelNode start = labelHandler.retreiveLabel(parts[0]);
+				LabelNode end = labelHandler.retreiveLabel(parts[1]);
+				LabelNode handler = labelHandler.retreiveLabel(parts[2]);
+				String exc = parts[3];
+				TryCatchBlockNode tcbn = new TryCatchBlockNode(start, end, handler, exc);
+				m.tryCatchBlocks.add(tcbn);
+				return null;
+			}
+			case "LOCALVAR": {
+				// LocalVariableNode lvn = new LocalVariableNode(arg0, arg1, arg2, arg3, arg4, arg5)
+				return null;
+			}
 			default:
-				throw new BuilderException("Unknown metdata key: " + key + " (" + meta + ").");
+				throw new BuilderException("Unknown metdata key: " + key + " <" + meta + ">.");
 		}
 	}
 	

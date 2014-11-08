@@ -17,6 +17,10 @@ public class PrefixedStringBuilder {
 	}
 	
 	public PrefixedStringBuilder append(Object o) {
+		if (o == null) {
+			sb.append("null");
+			return this;
+		}
 		return append(o.toString());
 	}
 	

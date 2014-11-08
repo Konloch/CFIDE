@@ -28,9 +28,13 @@ public class IDETabbedPane extends JTabbedPane {
 		String tabName = loc.getName().substring(0, loc.getName().length() - 4);// remove .jar from the end of the name
 		
 		ProjectPanel panel = new ProjectPanel(this, tabName, config);
-		addTab(tabName, panel);
-		panel.setupFinal();
-		setSelectedComponent(panel);
+		if (panel.worked()) {
+			addTab(tabName, panel);
+			panel.setupFinal();
+			setSelectedComponent(panel);
+		} else {
+			JOptionPane.showMessageDialog(null, "Error loading jar, check console", "Error", JOptionPane.ERROR_MESSAGE);
+		}
 	}
 	
 	public void openProj(String location) {
@@ -43,8 +47,12 @@ public class IDETabbedPane extends JTabbedPane {
 		String tabName = loc.getName().substring(0, loc.getName().length() - 6);// remove .cfide from the end of the name
 		
 		ProjectPanel panel = new ProjectPanel(this, tabName, config);
-		addTab(tabName, panel);
-		panel.setupFinal();
-		setSelectedComponent(panel);
+		if (panel.worked()) {
+			addTab(tabName, panel);
+			panel.setupFinal();
+			setSelectedComponent(panel);
+		} else {
+			JOptionPane.showMessageDialog(null, "Error loading jar, check console", "Error", JOptionPane.ERROR_MESSAGE);
+		}
 	}
 }

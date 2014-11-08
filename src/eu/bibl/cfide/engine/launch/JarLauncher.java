@@ -59,6 +59,7 @@ public final class JarLauncher implements Runnable {
 			}
 		}
 		
+		System.out.println("[MONITOR]: Stopped running.");
 		busy = false;
 	}
 	

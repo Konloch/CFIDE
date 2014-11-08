@@ -1,6 +1,7 @@
 package eu.bibl.cfide.ui.editor;
 
 import java.awt.Component;
+import java.awt.Container;
 import java.awt.Dialog;
 import java.awt.Frame;
 import java.awt.event.ActionEvent;
@@ -37,6 +38,7 @@ import eu.bibl.cfide.engine.launch.JarLauncher;
 import eu.bibl.cfide.engine.launch.dump.CustomJarDumper;
 import eu.bibl.cfide.ui.IDEFrame;
 import eu.bibl.cfide.ui.ProjectPanel;
+import eu.bibl.cfide.ui.tree.ClassTreeNode;
 
 public class EditorTabbedPane extends JTabbedPane implements ActionListener {
 	
@@ -48,23 +50,32 @@ public class EditorTabbedPane extends JTabbedPane implements ActionListener {
 	public EditorTabbedPane(CFIDEConfig config) {
 		tabs = new HashMap<String, EditorTextTab>();
 		setFocusable(false);
-		createSearchToolBar();
+		// createSearchToolBar();
 		// setComponentPopupMenu(popup);
 	}
 	
 	private JTextField searchField;
 	private JCheckBox regexCB;
 	private JCheckBox matchCaseCB;
+	private JToolBar theToolBar;
 	
 	protected void createSearchToolBar() {
-		JToolBar toolBar = new JToolBar();
+		final JDialog dialog = new JDialog(IDEFrame.getInstance());
+		theToolBar = new JToolBar() {
+			private static final long serialVersionUID = -1935295602908748811L;
+			
+			@Override
+			public Container getParent() {
+				return dialog;
+			}
+		};
 		searchField = new JTextField(30);
-		toolBar.add(searchField);
+		theToolBar.add(searchField);
 		final JButton nextButton = new JButton("Find Next");
 		nextButton.setFocusable(false);
 		nextButton.setActionCommand("FindNext");
 		nextButton.addActionListener(this);
-		toolBar.add(nextButton);
+		theToolBar.add(nextButton);
 		searchField.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
@@ -75,70 +86,18 @@ public class EditorTabbedPane extends JTabbedPane implements ActionListener {
 		prevButton.setFocusable(false);
 		prevButton.setActionCommand("FindPrev");
 		prevButton.addActionListener(this);
-		toolBar.add(prevButton);
+		theToolBar.add(prevButton);
 		regexCB = new JCheckBox("Regex");
-		toolBar.add(regexCB);
+		theToolBar.add(regexCB);
 		matchCaseCB = new JCheckBox("Match Case");
-		toolBar.add(matchCaseCB);
-		// toolBar.setVisible(true);
-		toolBar.setUI(new BasicToolBarUI() {
-			@Override
-			protected RootPaneContainer createFloatingWindow(JToolBar o) {
-				class ToolBarDialog extends JDialog {
-					public ToolBarDialog(Frame owner, String title, boolean modal) {
-						super(owner, title, modal);
-					}
-					
-					public ToolBarDialog(Dialog owner, String title, boolean modal) {
-						super(owner, title, modal);
-					}
-					
-					// Override createRootPane() to automatically resize
-					// the frame when contents change
-					@Override
-					protected JRootPane createRootPane() {
-						JRootPane rootPane = new JRootPane() {
-							private boolean packing = false;
-							
-							@Override
-							public void validate() {
-								super.validate();
-								if (!packing) {
-									packing = true;
-									pack();
-									packing = false;
-								}
-							}
-						};
-						rootPane.setOpaque(true);
-						return rootPane;
-					}
-				}
-				
-				JDialog dialog = new JDialog(IDEFrame.getInstance());
-				// Window window = IDEFrame.getInstance();
-				// if (window instanceof Frame) {
-				// dialog = new ToolBarDialog((Frame) window, toolbar.getName(), false);
-				// } else if (window instanceof Dialog) {
-				// dialog = new ToolBarDialog((Dialog) window, toolbar.getName(), false);
-				// } else {
-				// dialog = new ToolBarDialog((Frame) null, toolbar.getName(), false);
-				// }
-				
-				dialog.getRootPane().setName("ToolBar.FloatingWindow");
-				// dialog.setTitle(toolBar.getName());
-				dialog.setResizable(false);
-				WindowListener wl = createFrameListener();
-				dialog.addWindowListener(wl);
-				return dialog;
-			}
-			
-			{
-				// createDragWindow(toolBar).setVisible(true);
-				// setFloating(true, new Point(10, 10));
-			}
-		});
-		
+		theToolBar.add(matchCaseCB);
+		CustomToolBarUI ui = new CustomToolBarUI();
+		theToolBar.setUI(ui);
+		((JDialog) ui.createFloatingWindow(theToolBar)).setVisible(true);
+		// JDialog dialog = new JDialog();
+		// dialog.add(toolBar, BorderLayout.SOUTH);
+		// dialog.pack();
+		// dialog.setVisible(true);
 	}
 	
 	@Override
@@ -174,8 +133,10 @@ public class EditorTabbedPane extends JTabbedPane implements ActionListener {
 	public EditorTextTab createTextTab(String className, ProjectPanel projPanel) {
 		EditorTextTab textTab = tabs.get(className);
 		if (textTab == null) {
-			tabs.put(className, textTab = new EditorTextTab(config, this, projPanel, className));
-			addTab(className, textTab);
+			// ISSUE #1: https://github.com/TheBiblMan/CFIDE/issues/1
+			String simpleName = ClassTreeNode.getClassName(className);
+			tabs.put(className, textTab = new EditorTextTab(config, this, projPanel, simpleName));
+			addTab(simpleName, textTab);
 			textTab.setupFinal();
 		}
 		return textTab;
@@ -225,5 +186,58 @@ public class EditorTabbedPane extends JTabbedPane implements ActionListener {
 				}
 			}
 		}.start();
+	}
+	
+	class CustomToolBarUI extends BasicToolBarUI {
+		
+		@Override
+		protected RootPaneContainer createFloatingWindow(JToolBar toolbar) {
+			class ToolBarDialog extends JDialog {
+				public ToolBarDialog(Frame owner, String title, boolean modal) {
+					super(owner, title, modal);
+				}
+				
+				public ToolBarDialog(Dialog owner, String title, boolean modal) {
+					super(owner, title, modal);
+				}
+				
+				// Override createRootPane() to automatically resize
+				// the frame when contents change
+				@Override
+				protected JRootPane createRootPane() {
+					JRootPane rootPane = new JRootPane() {
+						private boolean packing = false;
+						
+						@Override
+						public void validate() {
+							super.validate();
+							if (!packing) {
+								packing = true;
+								pack();
+								packing = false;
+							}
+						}
+					};
+					rootPane.setOpaque(true);
+					return rootPane;
+				}
+			}
+			
+			JDialog dialog = (JDialog) toolbar.getParent();
+			// if (window instanceof Frame) {
+			// dialog = new ToolBarDialog((Frame) window, toolbar.getName(), false);
+			// } else if (window instanceof Dialog) {
+			// dialog = new ToolBarDialog((Dialog) window, toolbar.getName(), false);
+			// } else {
+			// dialog = new ToolBarDialog((Frame) null, toolbar.getName(), false);
+			// }
+			
+			dialog.getRootPane().setName("ToolBar.FloatingWindow");
+			dialog.setTitle(toolbar.getName());
+			dialog.setResizable(false);
+			WindowListener wl = createFrameListener();
+			dialog.addWindowListener(wl);
+			return dialog;
+		}
 	}
 }

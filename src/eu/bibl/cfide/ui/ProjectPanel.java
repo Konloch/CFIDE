@@ -59,8 +59,17 @@ public class ProjectPanel extends JPanel implements MouseListener, ActionListene
 	private void init() {
 		File jarFile = new File(config.<String> getProperty(CFIDEConfig.JAR_LOCATION_KEY));
 		dl = new JarDownloader(new JarInfo(jarFile));
-		if (!dl.parse())
+		try {
+			if (!dl.parse()) {
+				worked = false;
+				return;
+			}
+		} catch (RuntimeException e) {
+			worked = false;
 			return;
+		}
+		
+		worked = true;
 		
 		splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT);
 		etp = new EditorTabbedPane(config);
@@ -73,6 +82,12 @@ public class ProjectPanel extends JPanel implements MouseListener, ActionListene
 		add(splitPane);
 		createPopupMenu();// needs to be called first
 		createTabPanel();
+	}
+	
+	private boolean worked;
+	
+	public boolean worked() {
+		return worked;
 	}
 	
 	@SuppressWarnings("unchecked")
@@ -186,7 +201,8 @@ public class ProjectPanel extends JPanel implements MouseListener, ActionListene
 	}
 	
 	public void setupFinal() { // called from IDETabbedPane.openJar and openProj
-		index = tabbedPane.indexOfTab(tabName);
+		// ISSUE #1: https://github.com/TheBiblMan/CFIDE/issues/1
+		index = tabbedPane.getTabCount() - 1;
 		tabbedPane.setTabComponentAt(index, tabNamePanel);
 	}
 	
