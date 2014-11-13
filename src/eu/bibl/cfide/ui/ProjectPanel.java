@@ -6,7 +6,7 @@ import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.io.File;
-import java.lang.reflect.Constructor;
+import java.io.IOException;
 
 import javax.swing.JButton;
 import javax.swing.JFileChooser;
@@ -17,19 +17,13 @@ import javax.swing.JPanel;
 import javax.swing.JPopupMenu;
 import javax.swing.JScrollPane;
 import javax.swing.JSplitPane;
-import javax.swing.JTabbedPane;
-import javax.swing.JTree;
 import javax.swing.filechooser.FileNameExtensionFilter;
 
-import eu.bibl.banalysis.asm.ClassNode;
 import eu.bibl.bio.JarInfo;
 import eu.bibl.bio.jfile.in.JarDownloader;
-import eu.bibl.cfide.config.CFIDEConfig;
-import eu.bibl.cfide.config.ConfigUtils;
-import eu.bibl.cfide.engine.compiler.BasicSourceCompiler;
-import eu.bibl.cfide.engine.compiler.CFIDECompiler;
-import eu.bibl.cfide.engine.decompiler.ClassNodeDecompilationUnit;
-import eu.bibl.cfide.engine.decompiler.DecompilationUnit;
+import eu.bibl.cfide.context.CFIDEContext;
+import eu.bibl.cfide.io.config.CFIDEConfig;
+import eu.bibl.cfide.io.config.ConfigUtils;
 import eu.bibl.cfide.ui.editor.EditorTabbedPane;
 import eu.bibl.cfide.ui.editor.EditorTextTab;
 import eu.bibl.cfide.ui.tree.ClassViewerTree;
@@ -38,113 +32,49 @@ public class ProjectPanel extends JPanel implements MouseListener, ActionListene
 	
 	private static final long serialVersionUID = 7392644318314592144L;
 	
-	protected JTabbedPane tabbedPane;
-	protected String tabName;
-	protected CFIDEConfig config;
-	protected JSplitPane splitPane;
-	protected JarDownloader dl;
-	protected JScrollPane scrollPane;
-	protected JTree tree;
-	protected EditorTabbedPane etp;
-	protected BasicSourceCompiler<ClassNode[]> compiler;
+	protected CFIDEContext context;
 	
-	public ProjectPanel(JTabbedPane tabbedPane, String tabName, CFIDEConfig config) {
+	public ProjectPanel() throws IOException {
 		super(new BorderLayout());
-		this.tabbedPane = tabbedPane;
-		this.tabName = tabName;
-		this.config = config;
-		init();
 	}
 	
-	private void init() {
+	protected void init(IDEFrame frame, IDETabbedPane tabbedPane, String tabName, CFIDEConfig config) throws IOException {
 		File jarFile = new File(config.<String> getProperty(CFIDEConfig.JAR_LOCATION_KEY));
-		dl = new JarDownloader(new JarInfo(jarFile));
+		JarDownloader dl = new JarDownloader(new JarInfo(jarFile));
 		try {
 			if (!dl.parse()) {
-				worked = false;
-				return;
+				throw new IOException("Couldn't load jarfile: " + jarFile);
 			}
 		} catch (RuntimeException e) {
-			worked = false;
-			return;
+			throw new IOException("Error loading jar", e);
 		}
 		
-		worked = true;
+		context = new CFIDEContext(frame, tabbedPane, dl, this, config, tabName);
 		
-		splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT);
-		etp = new EditorTabbedPane(config);
-		compiler = getCompilerImpl();
-		tree = new ClassViewerTree(config, etp, jarFile.getName(), dl.getContents(), this, getDecompilerImpl(), compiler);
+		EditorTabbedPane etp = new EditorTabbedPane(context);
+		context.editorTabbedPane = etp;
+		
+		ClassViewerTree tree = new ClassViewerTree(jarFile.getName(), context);
+		context.tree = tree;
+		
+		JScrollPane scrollPane = new JScrollPane(tree);
+		JSplitPane splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT);
 		splitPane.setResizeWeight(0.115D);
-		scrollPane = new JScrollPane(tree);
 		splitPane.add(scrollPane);
 		splitPane.add(etp);
+		
 		add(splitPane);
 		createPopupMenu();// needs to be called first
 		createTabPanel();
 	}
 	
-	private boolean worked;
-	
-	public boolean worked() {
-		return worked;
-	}
-	
-	@SuppressWarnings("unchecked")
-	protected DecompilationUnit<ClassNode> getDecompilerImpl() {
-		DecompilationUnit<ClassNode> decompilerImpl = null;
-		String className = null;
-		try {
-			className = config.getProperty(CFIDEConfig.DECOMPILER_CLASS_KEY, ClassNodeDecompilationUnit.class.getCanonicalName());
-			Class<?> c = Class.forName(className);
-			for (Constructor<?> constructor : c.getDeclaredConstructors()) {
-				if (constructor.toString().equals("(eu.bibl.cfide.config.CFIDEConfig,eu.bibl.banalysis.storage.classes.ClassContainer)")) {
-					decompilerImpl = (DecompilationUnit<ClassNode>) constructor.newInstance(config, dl.getContents());
-				}
-			}
-			if (decompilerImpl == null) {
-				decompilerImpl = new ClassNodeDecompilationUnit(config, dl.getContents());
-			}
-		} catch (Exception e) {
-			System.out.println("Error loading custom compiler: " + className);
-			e.printStackTrace();
-			config.putProperty(CFIDEConfig.DECOMPILER_CLASS_KEY, ClassNodeDecompilationUnit.class.getCanonicalName());
-			decompilerImpl = new ClassNodeDecompilationUnit(config, dl.getContents());
-		}
-		return decompilerImpl;
-	}
-	
-	@SuppressWarnings("unchecked")
-	public BasicSourceCompiler<ClassNode[]> getCompilerImpl() {
-		BasicSourceCompiler<ClassNode[]> compilerImpl = null;
-		String className = null;
-		try {
-			className = config.getProperty(CFIDEConfig.COMPILER_CLASS_KEY, CFIDECompiler.class.getCanonicalName());
-			Class<?> c = Class.forName(className);
-			for (Constructor<?> constructor : c.getDeclaredConstructors()) {
-				if (constructor.toString().endsWith("CFIDEConfig)")) {
-					compilerImpl = (BasicSourceCompiler<ClassNode[]>) constructor.newInstance(config);
-				}
-			}
-			if (compilerImpl == null) {
-				compilerImpl = new CFIDECompiler(config);
-			}
-		} catch (Exception e) {
-			System.out.println("Error loading custom compiler: " + className);
-			e.printStackTrace();
-			config.putProperty(CFIDEConfig.COMPILER_CLASS_KEY, CFIDECompiler.class.getCanonicalName());
-			compilerImpl = new CFIDECompiler(config);
-		}
-		return compilerImpl;
+	public CFIDEContext getContext() {
+		return context;
 	}
 	
 	public String getText(String className) {
-		EditorTextTab ett = etp.getTextTab(className);
+		EditorTextTab ett = context.editorTabbedPane.getTextTab(className);
 		return ett.getTextArea().getText();
-	}
-	
-	public JarDownloader getJarDownloader() {
-		return dl;
 	}
 	
 	protected JPopupMenu popupMenu;
@@ -168,7 +98,7 @@ public class ProjectPanel extends JPanel implements MouseListener, ActionListene
 							return;
 					}
 					// if code reaches here, user pressed yes button
-					ConfigUtils.save(config, file, true);
+					ConfigUtils.save(context.config, file, true);
 				}
 			}
 		});
@@ -186,7 +116,7 @@ public class ProjectPanel extends JPanel implements MouseListener, ActionListene
 		tabNamePanel.setOpaque(false);
 		tabNamePanel.setFocusable(false);
 		
-		tabNameLabel = new JLabel(tabName);
+		tabNameLabel = new JLabel(context.tabName);
 		tabNameLabel.addMouseListener(this);
 		
 		tabCloseButton = new JButton(UISettings.CLOSE_BUTTON_ICON);
@@ -202,6 +132,7 @@ public class ProjectPanel extends JPanel implements MouseListener, ActionListene
 	
 	public void setupFinal() { // called from IDETabbedPane.openJar and openProj
 		// ISSUE #1: https://github.com/TheBiblMan/CFIDE/issues/1
+		IDETabbedPane tabbedPane = context.ideTabbedPane;
 		index = tabbedPane.getTabCount() - 1;
 		tabbedPane.setTabComponentAt(index, tabNamePanel);
 	}
@@ -212,7 +143,7 @@ public class ProjectPanel extends JPanel implements MouseListener, ActionListene
 	
 	@Override
 	public void mousePressed(MouseEvent e) {
-		tabbedPane.setSelectedComponent(ProjectPanel.this);
+		context.ideTabbedPane.setSelectedComponent(ProjectPanel.this);
 		if (e.getButton() != MouseEvent.BUTTON1) {
 			if (popupMenu.isShowing())
 				popupMenu.setVisible(false);
@@ -234,6 +165,6 @@ public class ProjectPanel extends JPanel implements MouseListener, ActionListene
 	
 	@Override
 	public void actionPerformed(ActionEvent e) {
-		tabbedPane.remove(ProjectPanel.this);
+		context.ideTabbedPane.remove(ProjectPanel.this);
 	}
 }

@@ -22,45 +22,37 @@ import javax.swing.filechooser.FileNameExtensionFilter;
 import org.fife.ui.rsyntaxtextarea.RSyntaxTextArea;
 import org.fife.ui.rtextarea.RTextScrollPane;
 
-import eu.bibl.banalysis.asm.ClassNode;
 import eu.bibl.banalysis.storage.classes.ClassContainer;
-import eu.bibl.bio.jfile.in.JarDownloader;
-import eu.bibl.cfide.config.CFIDEConfig;
-import eu.bibl.cfide.engine.compiler.BasicSourceCompiler;
+import eu.bibl.cfide.context.CFIDEContext;
 import eu.bibl.cfide.engine.launch.JarLauncher;
-import eu.bibl.cfide.ui.ProjectPanel;
 import eu.bibl.cfide.ui.UISettings;
 
 public class EditorTextTab extends RTextScrollPane implements MouseListener, ActionListener {
 	
 	private static final long serialVersionUID = -9001184665877228717L;
 	
-	protected CFIDEConfig config;
-	protected EditorTabbedPane tabbedPane;
-	protected ProjectPanel projPanel;
-	protected String title;
-	protected JPopupMenu popupMenu;
+	protected final CFIDEContext context;
+	protected final String title;
+	protected final JPopupMenu popupMenu;
 	
-	public EditorTextTab(CFIDEConfig config, EditorTabbedPane tabbedPane, ProjectPanel projPanel, String title) {
+	public EditorTextTab(String title, CFIDEContext context) {
 		super(new RSyntaxTextArea());
-		this.config = config;
-		this.tabbedPane = tabbedPane;
-		this.projPanel = projPanel;
 		this.title = title;
-		init();
-	}
-	
-	protected void init() {
+		this.context = context;
+		
 		((RSyntaxTextArea) getTextArea()).setAntiAliasingEnabled(true);
-		createPopupMenu(); // needs to be first
+		popupMenu = createPopupMenu(); // needs to be first
 		createTabPanel();
 	}
 	
 	protected String lastMainClass = null;
 	
-	protected void createPopupMenu() {
+	protected JPopupMenu createPopupMenu() {
+		
+		final EditorTabbedPane tabbedPane = context.editorTabbedPane;
+		
 		// Close menu popup
-		popupMenu = new JPopupMenu();
+		JPopupMenu popupMenu = new JPopupMenu();
 		JMenuItem saveJarMenuItem = new JMenuItem("Save Jar");
 		saveJarMenuItem.addActionListener(new ActionListener() {
 			@Override
@@ -71,9 +63,7 @@ public class EditorTextTab extends RTextScrollPane implements MouseListener, Act
 				int returnValue = fileChooser.showSaveDialog(EditorTextTab.this);
 				if (returnValue == JFileChooser.APPROVE_OPTION) {
 					final File file = fileChooser.getSelectedFile();
-					BasicSourceCompiler<ClassNode[]> compiler = projPanel.getCompilerImpl();
-					final JarDownloader dl = projPanel.getJarDownloader();
-					tabbedPane.compileAndDump(dl, compiler, file, false, null);
+					tabbedPane.compileAndDump(context, file, false, null);
 				}
 			}
 		});
@@ -94,9 +84,7 @@ public class EditorTextTab extends RTextScrollPane implements MouseListener, Act
 				int returnValue = fileChooser.showSaveDialog(EditorTextTab.this);
 				if (returnValue == JFileChooser.APPROVE_OPTION) {
 					final File file = fileChooser.getSelectedFile();
-					BasicSourceCompiler<ClassNode[]> compiler = projPanel.getCompilerImpl();
-					final JarDownloader dl = projPanel.getJarDownloader();
-					ClassContainer container = dl.getContents();
+					ClassContainer container = context.jarDownloader.getContents();
 					String mainClass = lastMainClass;
 					
 					if (mainClass == null) {
@@ -128,7 +116,7 @@ public class EditorTextTab extends RTextScrollPane implements MouseListener, Act
 						if (mainClass == null)
 							return;
 					}
-					tabbedPane.compileAndDump(dl, compiler, file, true, mainClass);
+					tabbedPane.compileAndDump(context, file, true, mainClass);
 					
 				}
 			}
@@ -170,6 +158,8 @@ public class EditorTextTab extends RTextScrollPane implements MouseListener, Act
 		popupMenu.add(closeMenuItem);
 		popupMenu.add(closeOthers);
 		popupMenu.add(closeAll);
+		
+		return popupMenu;
 	}
 	
 	protected int index;
@@ -199,6 +189,7 @@ public class EditorTextTab extends RTextScrollPane implements MouseListener, Act
 	
 	public void setupFinal() {// called from EditorTabbedPane.createTextTab
 		// ISSUE #1: https://github.com/TheBiblMan/CFIDE/issues/1
+		EditorTabbedPane tabbedPane = context.editorTabbedPane;
 		index = tabbedPane.getTabCount() - 1;
 		tabbedPane.setTabComponentAt(index, tabNamePanel);
 	}
@@ -209,7 +200,7 @@ public class EditorTextTab extends RTextScrollPane implements MouseListener, Act
 	
 	@Override
 	public void mousePressed(MouseEvent e) {
-		tabbedPane.setSelectedComponent(EditorTextTab.this);
+		context.editorTabbedPane.setSelectedComponent(EditorTextTab.this);
 		if (e.getButton() != MouseEvent.BUTTON1) {
 			if (popupMenu.isShowing())
 				popupMenu.setVisible(false);
@@ -233,7 +224,7 @@ public class EditorTextTab extends RTextScrollPane implements MouseListener, Act
 	public void actionPerformed(ActionEvent e) {
 		String cmd = e.getActionCommand();
 		if (cmd.equals("close")) {
-			tabbedPane.remove(EditorTextTab.this);
+			context.editorTabbedPane.remove(EditorTextTab.this);
 		}
 	}
 	

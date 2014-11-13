@@ -1,11 +1,11 @@
 package eu.bibl.cfide.ui;
 
-import static eu.bibl.cfide.config.GlobalConfig.FRAME_HEIGHT_KEY;
-import static eu.bibl.cfide.config.GlobalConfig.FRAME_LOCATION_X_KEY;
-import static eu.bibl.cfide.config.GlobalConfig.FRAME_LOCATION_Y_KEY;
-import static eu.bibl.cfide.config.GlobalConfig.FRAME_MAXIMIZED_KEY;
-import static eu.bibl.cfide.config.GlobalConfig.FRAME_WIDTH_KEY;
-import static eu.bibl.cfide.config.GlobalConfig.GLOBAL_CONFIG;
+import static eu.bibl.cfide.io.config.GlobalConfig.FRAME_HEIGHT_KEY;
+import static eu.bibl.cfide.io.config.GlobalConfig.FRAME_LOCATION_X_KEY;
+import static eu.bibl.cfide.io.config.GlobalConfig.FRAME_LOCATION_Y_KEY;
+import static eu.bibl.cfide.io.config.GlobalConfig.FRAME_MAXIMIZED_KEY;
+import static eu.bibl.cfide.io.config.GlobalConfig.FRAME_WIDTH_KEY;
+import static eu.bibl.cfide.io.config.GlobalConfig.GLOBAL_CONFIG;
 
 import java.awt.BorderLayout;
 import java.awt.Dimension;
@@ -26,6 +26,8 @@ import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
 import javax.swing.filechooser.FileNameExtensionFilter;
+
+import eu.bibl.cfide.engine.plugin.ui.PluginViewerFrame;
 
 public class IDEFrame extends JFrame implements ActionListener, ComponentListener, WindowStateListener {
 	
@@ -55,6 +57,8 @@ public class IDEFrame extends JFrame implements ActionListener, ComponentListene
 		idePanel = new IDETabbedPane();
 		add(idePanel);
 		
+		pluginViewerFrame = new PluginViewerFrame();
+		
 		pack();
 		
 		if (GLOBAL_CONFIG.exists(FRAME_LOCATION_X_KEY) && GLOBAL_CONFIG.exists(FRAME_LOCATION_Y_KEY)) {
@@ -65,14 +69,18 @@ public class IDEFrame extends JFrame implements ActionListener, ComponentListene
 			setLocationRelativeTo(null);
 		}
 		
-		setVisible(true);
-		
-		Point loc = getLocationOnScreen();
-		GLOBAL_CONFIG.putProperty(FRAME_LOCATION_X_KEY, Integer.valueOf(loc.x));
-		GLOBAL_CONFIG.putProperty(FRAME_LOCATION_Y_KEY, Integer.valueOf(loc.y));
-		
 		addComponentListener(this);
 		addWindowStateListener(this);
+	}
+	
+	@Override
+	public void setVisible(boolean b) {
+		super.setVisible(b);
+		if (b) {
+			Point loc = getLocationOnScreen();
+			GLOBAL_CONFIG.putProperty(FRAME_LOCATION_X_KEY, Integer.valueOf(loc.x));
+			GLOBAL_CONFIG.putProperty(FRAME_LOCATION_Y_KEY, Integer.valueOf(loc.y));
+		}
 	}
 	
 	private void createJMenuBar() {
@@ -98,6 +106,28 @@ public class IDEFrame extends JFrame implements ActionListener, ComponentListene
 		menuBar.add(fileMenu);
 		// =====================================
 		
+		// plugin menu stuff ===================================
+		JMenu pluginMenu = new JMenu("Plugins");
+		
+		JMenuItem showLoadedMenuItem = new JMenuItem("Show Loaded");
+		JMenuItem reloadPluginsMenuItem = new JMenuItem("Graceful Reload");
+		JMenuItem forceReloadPluginsMenuItem = new JMenuItem("Force Reload");
+		
+		showLoadedMenuItem.setActionCommand("showLoaded");
+		reloadPluginsMenuItem.setActionCommand("reloadPlugins");
+		forceReloadPluginsMenuItem.setActionCommand("forceReloadPlugins");
+		
+		showLoadedMenuItem.addActionListener(this);
+		reloadPluginsMenuItem.addActionListener(this);
+		forceReloadPluginsMenuItem.addActionListener(this);
+		
+		pluginMenu.add(showLoadedMenuItem);
+		pluginMenu.add(reloadPluginsMenuItem);
+		pluginMenu.add(forceReloadPluginsMenuItem);
+		
+		menuBar.add(pluginMenu);
+		// =====================================
+		
 		// help menu stuff =====================================
 		JMenu helpMenu = new JMenu("Help");
 		
@@ -115,8 +145,11 @@ public class IDEFrame extends JFrame implements ActionListener, ComponentListene
 		
 		menuBar.add(helpMenu);
 		// =====================================
+		
 		setJMenuBar(menuBar);
 	}
+	
+	protected PluginViewerFrame pluginViewerFrame;
 	
 	@Override
 	public void actionPerformed(ActionEvent e) {
@@ -144,6 +177,9 @@ public class IDEFrame extends JFrame implements ActionListener, ComponentListene
 				}
 				break;
 			}
+			case "showLoaded":
+				pluginViewerFrame.setVisible(true);
+				break;
 			case "help":
 				HelpSet helpSet = new HelpSet();
 				helpSet.createHelpBroker("test");
@@ -202,7 +238,7 @@ public class IDEFrame extends JFrame implements ActionListener, ComponentListene
 	public void componentHidden(ComponentEvent e) {
 	}
 	
-	public static IDEFrame getInstance() {
+	static IDEFrame getInstance() {
 		return instance;
 	}
 }

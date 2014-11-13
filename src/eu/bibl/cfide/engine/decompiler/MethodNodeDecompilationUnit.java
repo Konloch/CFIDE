@@ -10,14 +10,14 @@ import org.objectweb.asm.tree.LocalVariableNode;
 import org.objectweb.asm.tree.MethodNode;
 import org.objectweb.asm.tree.TryCatchBlockNode;
 
-import eu.bibl.cfide.config.CFIDEConfig;
+import eu.bibl.cfide.context.CFIDEContext;
 
 public class MethodNodeDecompilationUnit implements DecompilationUnit<MethodNode> {
 	
-	protected CFIDEConfig config;
+	protected CFIDEContext context;
 	
-	public MethodNodeDecompilationUnit(CFIDEConfig config) {
-		this.config = config;
+	public MethodNodeDecompilationUnit(CFIDEContext context) {
+		this.context = context;
 	}
 	
 	@Override
@@ -52,11 +52,10 @@ public class MethodNodeDecompilationUnit implements DecompilationUnit<MethodNode
 			}
 			
 			if (m.signature != null) {
-				sb.append(m.signature);
-				sb.append("\n");
+				sb.append("         <sig:").append(m.signature).append(">\n");
 			}
 			
-			AdvancedInstructionPrinter insnPrinter = new AdvancedInstructionPrinter(config, m);
+			AdvancedInstructionPrinter insnPrinter = new AdvancedInstructionPrinter(context, m);
 			List<String> print = insnPrinter.createPrint();
 			
 			addAttrList(m.attrs, "attr", sb, insnPrinter);
@@ -64,7 +63,7 @@ public class MethodNodeDecompilationUnit implements DecompilationUnit<MethodNode
 			addAttrList(m.invisibleAnnotations, "invisLocalVarAnno", sb, insnPrinter);
 			addAttrList(m.invisibleTypeAnnotations, "invisTypeAnno", sb, insnPrinter);
 			addAttrList(m.localVariables, "localVar", sb, insnPrinter);
-			addAttrList(m.visibleAnnotations, "visibAnno", sb, insnPrinter);
+			addAttrList(m.visibleAnnotations, "visAnno", sb, insnPrinter);
 			addAttrList(m.visibleLocalVariableAnnotations, "visLocalVarAnno", sb, insnPrinter);
 			addAttrList(m.visibleTypeAnnotations, "visTypeAnno", sb, insnPrinter);
 			

@@ -5,6 +5,7 @@ import java.io.IOException;
 import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
 
+import eu.bibl.cfide.io.FileConstants;
 import eu.bibl.cfide.ui.IDEFrame;
 import eu.bibl.cfide.ui.UISettings;
 
@@ -19,10 +20,16 @@ public class Boot {
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
+		try {
+			Class.forName(FileConstants.class.getCanonicalName());// load it
+		} catch (ClassNotFoundException e) {
+			e.printStackTrace();
+		}
+		
 		SwingUtilities.invokeLater(new Runnable() {
 			@Override
 			public void run() {
-				new IDEFrame();
+				new IDEFrame().setVisible(true);
 			}
 		});
 	}

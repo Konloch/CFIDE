@@ -1,4 +1,4 @@
-package eu.bibl.cfide.config;
+package eu.bibl.cfide.io.config;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;

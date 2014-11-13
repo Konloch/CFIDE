@@ -3,6 +3,7 @@ package eu.bibl.cfide.engine.compiler.parser.cfideimpl;
 import java.util.ArrayList;
 import java.util.List;
 
+import eu.bibl.cfide.context.CFIDEContext;
 import eu.bibl.cfide.engine.compiler.parser.BasicTokenParser;
 import eu.bibl.cfide.engine.compiler.parser.ParserException;
 import eu.bibl.cfide.engine.compiler.parser.ParserToken;
@@ -14,6 +15,12 @@ import eu.bibl.cfide.engine.compiler.parser.cfideimpl.tokens.using.UsingToken;
 import eu.bibl.cfide.engine.util.StringArrayReader;
 
 public class BytecodeSourceParser extends BasicTokenParser {
+	
+	protected CFIDEContext context;
+	
+	public BytecodeSourceParser(CFIDEContext context) {
+		this.context = context;
+	}
 	
 	@Override
 	public List<ParserToken> parse(String text) throws ParserException {
@@ -143,10 +150,11 @@ public class BytecodeSourceParser extends BasicTokenParser {
 		StringBuilder sb = new StringBuilder();
 		int len = chars.length;
 		int locked = 0;
+		int depth = 0; // used when locked == 2
 		
 		while (start < len) {
 			char c = chars[start++];
-			if (locked == 0) {// 0 = not locked, 1 = string, 2 = <>
+			if (locked == 0) {// 0 = not locked, 1 = "", 2 = <>
 				if (c == '"') {
 					locked = 1;
 				} else if (c == '<') {
@@ -164,8 +172,13 @@ public class BytecodeSourceParser extends BasicTokenParser {
 					locked = 0;
 				}
 			} else if (locked == 2) {
-				if (c == '>') {
-					locked = 0;
+				if (c == '<') {
+					depth++;
+				} else if (c == '>') {
+					depth--;
+					if (depth <= 0) {
+						locked = 0;
+					}
 				}
 			}
 			

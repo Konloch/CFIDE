@@ -13,7 +13,8 @@ import org.objectweb.asm.tree.MethodNode;
 
 import eu.bibl.banalysis.asm.ClassNode;
 import eu.bibl.banalysis.storage.classes.ClassContainer;
-import eu.bibl.cfide.config.CFIDEConfig;
+import eu.bibl.cfide.context.CFIDEContext;
+import eu.bibl.cfide.io.config.CFIDEConfig;
 
 public class ClassNodeDecompilationUnit implements DecompilationUnit<ClassNode> {
 	
@@ -30,14 +31,12 @@ public class ClassNodeDecompilationUnit implements DecompilationUnit<ClassNode> 
 		VERSION_TABLE.put(Opcodes.V1_8, "V1_8");
 	}
 	
-	protected CFIDEConfig config;
-	protected ClassContainer container;
-	private DecompilationUnit<FieldNode> fndu;
-	private DecompilationUnit<MethodNode> mndu;
+	protected CFIDEContext context;
+	protected DecompilationUnit<FieldNode> fndu;
+	protected DecompilationUnit<MethodNode> mndu;
 	
-	public ClassNodeDecompilationUnit(CFIDEConfig config, ClassContainer container) {
-		this.config = config;
-		this.container = container;
+	public ClassNodeDecompilationUnit(CFIDEContext context) {
+		this.context = context;
 		fndu = getFieldNodeDecompilationUnitImpl();
 		mndu = getMethodNodeDecompilationUnitImpl();
 	}
@@ -46,23 +45,20 @@ public class ClassNodeDecompilationUnit implements DecompilationUnit<ClassNode> 
 	protected DecompilationUnit<FieldNode> getFieldNodeDecompilationUnitImpl() {
 		DecompilationUnit<FieldNode> fnduImpl = null;
 		String className = null;
+		CFIDEConfig config = context.config;
 		try {
 			className = config.getProperty(CFIDEConfig.DECOMPILER_FIELD_DECOMPILATION_UNIT_CLASS_KEY, FieldNodeDecompilationUnit.class.getCanonicalName());
 			Class<?> c = Class.forName(className);
-			
-			for (Constructor<?> constructor : c.getDeclaredConstructors()) {
-				if (constructor.toString().endsWith("CFIDEConfig)")) { // because the DecompilerVisitor<FieldNode> constructor needs to take a config instance to init the builder and parse
-					fnduImpl = (DecompilationUnit<FieldNode>) constructor.newInstance(config);
-				}
-			}
+			Constructor<?> c1 = c.getConstructor(CFIDEContext.class);
+			fnduImpl = (DecompilationUnit<FieldNode>) c1.newInstance(context);
 			if (fnduImpl == null) {
-				fnduImpl = new FieldNodeDecompilationUnit(config);
+				fnduImpl = new FieldNodeDecompilationUnit(context);
 			}
 		} catch (Exception e) {
 			System.out.println("Error loading custom DecompilationVisitor<FieldNode>: " + className);
 			e.printStackTrace();
 			config.putProperty(CFIDEConfig.DECOMPILER_FIELD_DECOMPILATION_UNIT_CLASS_KEY, FieldNodeDecompilationUnit.class.getCanonicalName());
-			fnduImpl = new FieldNodeDecompilationUnit(config);
+			fnduImpl = new FieldNodeDecompilationUnit(context);
 		}
 		return fnduImpl;
 	}
@@ -71,23 +67,21 @@ public class ClassNodeDecompilationUnit implements DecompilationUnit<ClassNode> 
 	protected DecompilationUnit<MethodNode> getMethodNodeDecompilationUnitImpl() {
 		DecompilationUnit<MethodNode> mnduImpl = null;
 		String className = null;
+		CFIDEConfig config = context.config;
 		try {
 			className = config.getProperty(CFIDEConfig.DECOMPILER_METHOD_DECOMPILATION_UNIT_CLASS_KEY, MethodNodeDecompilationUnit.class.getCanonicalName());
 			Class<?> c = Class.forName(className);
+			Constructor<?> c1 = c.getConstructor(CFIDEContext.class);
+			mnduImpl = (DecompilationUnit<MethodNode>) c1.newInstance(context);
 			
-			for (Constructor<?> constructor : c.getDeclaredConstructors()) {
-				if (constructor.toString().endsWith("CFIDEConfig)")) { // because the DecompilerVisitor<MethodNode> constructor needs to take a config instance to init the builder and parse
-					mnduImpl = (DecompilationUnit<MethodNode>) constructor.newInstance(config);
-				}
-			}
 			if (mnduImpl == null) {
-				mnduImpl = new MethodNodeDecompilationUnit(config);
+				mnduImpl = new MethodNodeDecompilationUnit(context);
 			}
 		} catch (Exception e) {
 			System.out.println("Error loading custom DecompilationVisitor<MethodNode>: " + className);
 			e.printStackTrace();
 			config.putProperty(CFIDEConfig.DECOMPILER_METHOD_DECOMPILATION_UNIT_CLASS_KEY, MethodNodeDecompilationUnit.class.getCanonicalName());
-			mnduImpl = new MethodNodeDecompilationUnit(config);
+			mnduImpl = new MethodNodeDecompilationUnit(context);
 		}
 		return mnduImpl;
 	}
@@ -104,6 +98,8 @@ public class ClassNodeDecompilationUnit implements DecompilationUnit<ClassNode> 
 		// Thread.sleep(100);
 		// } catch (InterruptedException e) {
 		// }
+		
+		ClassContainer container = context.jarDownloader.getContents();
 		sb.append("using asm ASM4\n");
 		sb.append("using ver ");
 		sb.append(VERSION_TABLE.get(cn.version));
@@ -128,7 +124,7 @@ public class ClassNodeDecompilationUnit implements DecompilationUnit<ClassNode> 
 		sb.append(" {\n");
 		if (cn.fields.size() > 0) {
 			for (FieldNode fn : cn.fields()) {
-				sb.append("\n     ");
+				sb.append("\n");
 				fndu.decompile(sb, fn);
 			}
 			sb.append("\n");

@@ -25,6 +25,7 @@ import org.objectweb.asm.tree.VarInsnNode;
 
 import eu.bibl.banalysis.asm.ClassNode;
 import eu.bibl.banalysis.asm.desc.OpcodeInfo;
+import eu.bibl.cfide.context.CFIDEContext;
 import eu.bibl.cfide.engine.compiler.builder.BuilderException;
 import eu.bibl.cfide.engine.compiler.builder.IBuilder;
 import eu.bibl.cfide.engine.compiler.parser.ParserToken;
@@ -39,6 +40,12 @@ import eu.bibl.cfide.engine.util.StringArrayReader;
 public class BytecodeClassNodeBuilder implements IBuilder<ClassNode[], List<ParserToken>>, Opcodes {
 	
 	public static final Map<Integer, String> VERSION_TABLE = new HashMap<Integer, String>();
+	
+	protected CFIDEContext context;
+	
+	public BytecodeClassNodeBuilder(CFIDEContext context) {
+		this.context = context;
+	}
 	
 	@SuppressWarnings("unchecked")
 	@Override
@@ -110,7 +117,6 @@ public class BytecodeClassNodeBuilder implements IBuilder<ClassNode[], List<Pars
 	
 	protected LabelHandler labelHandler = new LabelHandler();
 	
-	@SuppressWarnings("unchecked")
 	public InsnList parseCode(StringArrayReader cr, MethodNode m) throws BuilderException {
 		labelHandler.reset();
 		InsnList list = new InsnList();
@@ -139,24 +145,24 @@ public class BytecodeClassNodeBuilder implements IBuilder<ClassNode[], List<Pars
 					// }
 					list.add(ain);
 				}
-			} else if (s.endsWith(":") && !s.toUpperCase().equals("TRYCATCH:")) {// its a label
+			} else if (s.endsWith(":")) {// its a label
 				LabelNode ln = labelHandler.retreiveLabel(s);
 				list.add(ln);
 			} else /*
-			 * if (s.endsWith(":") && s.toUpperCase().equals("TRYCATCH:")) {
-			 * LabelNode start = labelHandler.retreiveLabel(expectCode(cr, "trycatchblocknode start label."));
-			 * LabelNode end = labelHandler.retreiveLabel(expectCode(cr, "trycatchblocknode start label."));
-			 * LabelNode handler = labelHandler.retreiveLabel(expectCode(cr, "trycatchblocknode start label."));
-			 * String exc = expectCode(cr, "exception type.");
-			 * TryCatchBlockNode tcbn = new TryCatchBlockNode(start, end, handler, exc);
-			 * m.tryCatchBlocks.add(tcbn);
-			 * } else
-			 */
-				if (s.startsWith("<") && s.endsWith(">")) {
-				AbstractInsnNode ain = parseCodeMetadata(m, s);
-				if (ain != null)
-					list.add(ain);
-				}
+				    * if (s.endsWith(":") && s.toUpperCase().equals("TRYCATCH:")) {
+				    * LabelNode start = labelHandler.retreiveLabel(expectCode(cr, "trycatchblocknode start label."));
+				    * LabelNode end = labelHandler.retreiveLabel(expectCode(cr, "trycatchblocknode start label."));
+				    * LabelNode handler = labelHandler.retreiveLabel(expectCode(cr, "trycatchblocknode start label."));
+				    * String exc = expectCode(cr, "exception type.");
+				    * TryCatchBlockNode tcbn = new TryCatchBlockNode(start, end, handler, exc);
+				    * m.tryCatchBlocks.add(tcbn);
+				    * } else
+				    */
+			if (s.startsWith("<") && s.endsWith(">")) {
+					AbstractInsnNode ain = parseCodeMetadata(m, s);
+					if (ain != null)
+						list.add(ain);
+			}
 		}
 		// m.maxLocals = highestVar;
 		
@@ -195,6 +201,9 @@ public class BytecodeClassNodeBuilder implements IBuilder<ClassNode[], List<Pars
 			case "LOCALVAR": {
 				// LocalVariableNode lvn = new LocalVariableNode(arg0, arg1, arg2, arg3, arg4, arg5)
 				return null;
+			}
+			case "VISANNO": {
+				
 			}
 			default:
 				throw new BuilderException("Unknown metdata key: " + key + " <" + meta + ">.");

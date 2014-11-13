@@ -1,4 +1,4 @@
-package eu.bibl.cfide.config;
+package eu.bibl.cfide.io.config;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -21,6 +21,8 @@ public class CFIDEConfig {
 	public static final String DECOMPILER_FIELD_DECOMPILATION_UNIT_CLASS_KEY = "decompiler.fndu.class";
 	public static final String DECOMPILER_METHOD_DECOMPILATION_UNIT_CLASS_KEY = "decompiler.mndu.class";
 	public static final String DECOMPILER_METHOD_PRINT_LINE_NUMBERS = "decompiler.mndu.linenumbers";
+	
+	public static final String PLUGIN_MANAGER_CLASS_KEY = "plugin.manager.class";
 	
 	protected File file;
 	protected Map<String, Object> properties;

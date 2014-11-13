@@ -6,19 +6,27 @@ import java.util.List;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.FieldNode;
 
-import eu.bibl.cfide.config.CFIDEConfig;
+import eu.bibl.cfide.context.CFIDEContext;
 
 public class FieldNodeDecompilationUnit implements DecompilationUnit<FieldNode> {
 	
-	protected CFIDEConfig config;
+	protected CFIDEContext context;
 	
-	public FieldNodeDecompilationUnit(CFIDEConfig config) {
-		this.config = config;
+	public FieldNodeDecompilationUnit(CFIDEContext context) {
+		this.context = context;
 	}
 	
 	@Override
 	public PrefixedStringBuilder decompile(PrefixedStringBuilder sb, FieldNode f) {
-		sb.append("field: ");
+		addAttrList(f.attrs, "attr", sb);
+		addAttrList(f.invisibleAnnotations, "invisAnno", sb);
+		addAttrList(f.invisibleTypeAnnotations, "invisTypeAnno", sb);
+		addAttrList(f.visibleAnnotations, "visAnno", sb);
+		addAttrList(f.visibleTypeAnnotations, "visTypeAnno", sb);
+		if (f.signature != null)
+			sb.append("     <sig:").append(f.signature).append(">\n");
+		
+		sb.append("     field: ");
 		String s = getAccessString(f.access);
 		sb.append(s);
 		if (s.length() > 0)
@@ -44,6 +52,28 @@ public class FieldNodeDecompilationUnit implements DecompilationUnit<FieldNode> 
 		}
 		sb.append(" :end");
 		return sb;
+	}
+	
+	private void addAttrList(List<?> list, String name, PrefixedStringBuilder sb) {
+		if (list == null)
+			return;
+		if (list.size() > 0) {
+			for (Object o : list) {
+				sb.append("     <");
+				sb.append(name);
+				sb.append(":");
+				sb.append(printAttr(o));
+				sb.append(">");
+				sb.append("\n");
+			}
+			sb.append("\n");
+		}
+	}
+	
+	private String printAttr(Object o) {
+		if (o == null)
+			return "";
+		return o.toString();
 	}
 	
 	public static String getAccessString(int access) {

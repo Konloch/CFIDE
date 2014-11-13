@@ -1,16 +1,15 @@
-package eu.bibl.cfide.config;
+package eu.bibl.cfide.io.config;
 
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 
+import eu.bibl.cfide.io.FileConstants;
+
 public final class GlobalConfig extends CFIDEConfig {
 	
-	public static final CFIDEConfig GLOBAL_CONFIG = load(new File(System.getProperty("user.home"), "CFIDEGlobal.config"));
-	
-	// public static final String FRAME_SIZE_KEY = "frame.size";
-	// public static final String FRAME_LOCATION_KEY = "frame.loc";
+	public static final CFIDEConfig GLOBAL_CONFIG = load(FileConstants.CFIDE_CONFIG);
 	
 	public static final String FRAME_MAXIMIZED_KEY = "frame.size.max";
 	public static final String FRAME_WIDTH_KEY = "frame.size.width";

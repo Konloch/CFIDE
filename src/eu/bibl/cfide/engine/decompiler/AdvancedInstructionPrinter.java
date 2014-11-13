@@ -23,15 +23,16 @@ import org.objectweb.asm.tree.TypeInsnNode;
 import org.objectweb.asm.tree.VarInsnNode;
 
 import eu.bibl.banalysis.asm.insn.InstructionPrinter;
-import eu.bibl.cfide.config.CFIDEConfig;
+import eu.bibl.cfide.context.CFIDEContext;
+import eu.bibl.cfide.io.config.CFIDEConfig;
 
 public class AdvancedInstructionPrinter extends InstructionPrinter {
 	
-	protected CFIDEConfig config;
+	protected CFIDEContext context;
 	
-	public AdvancedInstructionPrinter(CFIDEConfig config, MethodNode m) {
+	public AdvancedInstructionPrinter(CFIDEContext context, MethodNode m) {
 		super(m);
-		this.config = config;
+		this.context = context;
 	}
 	
 	@Override
@@ -90,7 +91,7 @@ public class AdvancedInstructionPrinter extends InstructionPrinter {
 	
 	@Override
 	protected String printLineNumberNode(LineNumberNode lin, ListIterator<?> it) {
-		if (config.getProperty(CFIDEConfig.DECOMPILER_METHOD_PRINT_LINE_NUMBERS, true)) {
+		if (context.config.getProperty(CFIDEConfig.DECOMPILER_METHOD_PRINT_LINE_NUMBERS, true)) {
 			return "    <line:" + lin.line + ">";
 		}
 		return "";

@@ -30,11 +30,9 @@ import javax.swing.tree.TreePath;
 import eu.bibl.banalysis.asm.ClassNode;
 import eu.bibl.banalysis.storage.classes.ClassContainer;
 import eu.bibl.bio.jfile.out.CompleteJarDumper;
-import eu.bibl.cfide.config.CFIDEConfig;
-import eu.bibl.cfide.engine.compiler.BasicSourceCompiler;
-import eu.bibl.cfide.engine.decompiler.DecompilationUnit;
+import eu.bibl.cfide.context.CFIDEContext;
 import eu.bibl.cfide.engine.decompiler.PrefixedStringBuilder;
-import eu.bibl.cfide.ui.ProjectPanel;
+import eu.bibl.cfide.io.config.CFIDEConfig;
 import eu.bibl.cfide.ui.editor.EditorTabbedPane;
 import eu.bibl.cfide.ui.editor.EditorTextTab;
 
@@ -43,22 +41,13 @@ public class ClassViewerTree extends JTree implements TreeSelectionListener, Mou
 	private static final long serialVersionUID = -1731401270496103799L;
 	private static final Icon JAR_ICON = new ImageIcon("res/jar.png");
 	
-	protected CFIDEConfig config;
-	protected EditorTabbedPane etp;
+	protected CFIDEContext context;
 	protected PackageTreeNode root;
-	protected ClassContainer contents;
-	protected ProjectPanel projectPanel;
-	protected DecompilationUnit<ClassNode> engine;
-	protected BasicSourceCompiler<ClassNode[]> compiler;
 	
-	public ClassViewerTree(CFIDEConfig config, EditorTabbedPane etp, String jarName, ClassContainer contents, ProjectPanel projectPanel, DecompilationUnit<ClassNode> engine, BasicSourceCompiler<ClassNode[]> compiler) {
+	public ClassViewerTree(String jarName, CFIDEContext context) {
 		super(new DefaultPackageTreeNode(jarName));
-		this.config = config;
-		this.etp = etp;
-		this.contents = contents;
-		this.projectPanel = projectPanel;
-		this.engine = engine;
-		this.compiler = compiler;
+		this.context = context;
+		
 		setRootVisible(true);
 		populateTree();
 		setComponentPopupMenu(createPopupMenu());
@@ -99,7 +88,7 @@ public class ClassViewerTree extends JTree implements TreeSelectionListener, Mou
 						int returnValue = fileChooser.showSaveDialog(ClassViewerTree.this);
 						if (returnValue == JFileChooser.APPROVE_OPTION) {
 							final File file = fileChooser.getSelectedFile();
-							final ClassNode[] cns = compiler.compile(projectPanel.getText(ctn.getClassName()));
+							final ClassNode[] cns = context.compiler.compile(context.projectPanel.getText(ctn.getClassName()));
 							new Thread() {
 								@Override
 								public void run() {
@@ -129,11 +118,11 @@ public class ClassViewerTree extends JTree implements TreeSelectionListener, Mou
 		
 		boolean listInnerClasses = false;
 		try {
-			listInnerClasses = config.getProperty(CFIDEConfig.TREE_LIST_INNER_CLASSES_KEY, false);
+			listInnerClasses = context.config.getProperty(CFIDEConfig.TREE_LIST_INNER_CLASSES_KEY, false);
 		} catch (Exception e) {
 			/* ignored */
 		}
-		for (ClassNode cn : contents.getNodes().values()) {
+		for (ClassNode cn : context.jarDownloader.getContents().getNodes().values()) {
 			if (!listInnerClasses && cn.name.contains("$"))
 				continue;// don't list inner classes, have them decompiled in the class they came from
 			String[] nameParts = cn.name.split("/");
@@ -185,60 +174,6 @@ public class ClassViewerTree extends JTree implements TreeSelectionListener, Mou
 		}
 	}
 	
-	// public void saveExpansionState() {
-	// Enumeration<TreePath> e = getExpandedDescendants(new TreePath(getModel().getRoot()));
-	// while (e.hasMoreElements()) {
-	// TreePath tp = e.nextElement();
-	// System.out.println("open: " + tp.toString());
-	// }
-	// }
-	//
-	// public void loadExpansionState(TreePath[] paths) {
-	// if (paths == null)
-	// return;
-	// for (TreePath path : paths) {
-	// expandPath(path);
-	// }
-	// }
-	
-	// public static boolean isDescendant(TreePath path1, TreePath path2) {
-	// int count1 = path1.getPathCount();
-	// int count2 = path2.getPathCount();
-	// if (count1 <= count2)
-	// return false;
-	// while (count1 != count2) {
-	// path1 = path1.getParentPath();
-	// count1--;
-	// }
-	// return path1.equals(path2);
-	// }
-	//
-	// public String getExpansionState(int row) {
-	// TreePath rowPath = getPathForRow(row);
-	// StringBuffer sb = new StringBuffer();
-	// int rowCount = getRowCount();
-	// for (int i = row; i < rowCount; i++) {
-	// TreePath path = getPathForRow(i);
-	// if ((i == row) || isDescendant(path, rowPath)) {
-	// if (isExpanded(path)) {
-	// sb.append(i - row);
-	// sb.append(",");
-	// }
-	// } else {
-	// break;
-	// }
-	// }
-	// return sb.toString();
-	// }
-	//
-	// public void restoreExpanstionState(int row, String expansionState) {
-	// String[] tokens = expansionState.split(",");
-	// for (String s : tokens) {
-	// int token = row + Integer.parseInt(s);
-	// expandRow(token);
-	// }
-	// }
-	
 	@Override
 	public void valueChanged(TreeSelectionEvent e) {
 		DefaultMutableTreeNode node = (DefaultMutableTreeNode) getLastSelectedPathComponent();
@@ -253,6 +188,7 @@ public class ClassViewerTree extends JTree implements TreeSelectionListener, Mou
 	protected void decompile(ClassNode cn) {
 		// String simpleName = ClassTreeNode.getClassName(cn.name);
 		// ISSUE #1: https://github.com/TheBiblMan/CFIDE/issues/1
+		EditorTabbedPane etp = context.editorTabbedPane;
 		EditorTextTab textTab = etp.getTextTab(cn.name);
 		if (textTab != null) {
 			if (!textTab.isShowing()) {
@@ -262,9 +198,9 @@ public class ClassViewerTree extends JTree implements TreeSelectionListener, Mou
 			etp.setSelectedComponent(textTab);
 			return;
 		}
-		textTab = etp.createTextTab(cn.name, projectPanel);
+		textTab = etp.createTextTab(cn.name, context);
 		etp.setSelectedComponent(textTab);
-		PrefixedStringBuilder sb = engine.decompile(new PrefixedStringBuilder(), cn);
+		PrefixedStringBuilder sb = context.decompiler.decompile(new PrefixedStringBuilder(), cn);
 		textTab.setText(sb.toString());
 	}
 	
